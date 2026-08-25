@@ -301,6 +301,7 @@
             gap: 14px;
             max-width: 80%;
             animation: fadeIn 0.25s ease-out;
+            position: relative;
         }
 
         @keyframes fadeIn {
@@ -342,6 +343,7 @@
             border: 1px solid var(--border-glass);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             word-break: break-word;
+            position: relative;
         }
 
         .message.self .message-content {
@@ -367,6 +369,67 @@
             color: var(--text-dim);
         }
 
+        /* Meddelande-åtgärder (Svara / Ta bort) */
+        .message-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+
+        .msg-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .msg-action-btn:hover {
+            color: var(--text-white);
+            background: rgba(217, 70, 239, 0.2);
+        }
+
+        .msg-action-btn.delete:hover {
+            color: #f43f5e;
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        /* Citering vid Svar i meddelande */
+        .reply-quote {
+            background: rgba(6, 5, 10, 0.5);
+            border-left: 3px solid var(--purple-pink);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .reply-quote-name {
+            font-weight: 700;
+            color: var(--pink-bright);
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+        }
+
+        .reply-quote-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+        }
+
         .message-text {
             font-size: 0.92rem;
             line-height: 1.45;
@@ -386,6 +449,37 @@
             padding: 16px 24px;
             background: var(--bg-dark);
             border-top: 1px solid var(--border-glass);
+        }
+
+        /* Svar-förhandsgranskning ovanför input */
+        .reply-preview-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(217, 70, 239, 0.1);
+            border-left: 3px solid var(--purple-pink);
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .reply-preview-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 0.82rem;
+        }
+
+        .reply-preview-user {
+            color: var(--pink-bright);
+            font-weight: 700;
+        }
+
+        .reply-preview-text {
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .preview-box {
@@ -534,7 +628,7 @@
             color: var(--text-muted);
         }
 
-        /* Mobil Mörk Overlay - INGEN BLUR HÄR NU */
+        /* Mobil Mörk Overlay */
         .mobile-overlay {
             display: none;
             position: fixed;
@@ -718,6 +812,10 @@
                 max-width: 90%;
             }
 
+            .message-actions {
+                opacity: 1;
+            }
+
             .input-area {
                 padding: 12px 14px;
             }
@@ -843,6 +941,15 @@
 
         <!-- Input-sektion -->
         <div class="input-area">
+            <!-- Svar-förhandsgranskning -->
+            <div class="reply-preview-bar" id="reply-preview-bar">
+                <div class="reply-preview-content">
+                    <span class="reply-preview-user">Svarar på <span id="reply-user-name"></span></span>
+                    <span class="reply-preview-text" id="reply-text-preview"></span>
+                </div>
+                <button class="remove-img" style="position: static;" onclick="clearReply()">&times;</button>
+            </div>
+
             <div class="preview-box" id="preview-box">
                 <button class="remove-img" onclick="clearImagePreview()">&times;</button>
                 <img id="image-preview-src" src="" alt="Förhandsgranskning">
@@ -897,6 +1004,8 @@
     let selectedImageData = null;
     let selectedProfileAvatar = null;
     let unsubscribeMessages = null;
+    let replyingToMessage = null;
+    let loadedMessages = {};
 
     // Lyssnare för Inloggningsstatus
     auth.onAuthStateChanged(user => {
@@ -1140,6 +1249,7 @@
         activeChat = { id: id, type: 'channel', name: name };
         document.getElementById('current-chat-title').innerText = name;
         updateActiveUI();
+        clearReply();
         loadMessages();
         closeSidebars();
     }
@@ -1149,6 +1259,7 @@
         activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user };
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
         updateActiveUI();
+        clearReply();
         loadMessages();
         closeSidebars();
     }
@@ -1185,18 +1296,25 @@
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
         container.innerHTML = '';
+        loadedMessages = {};
 
         unsubscribeMessages = db.collection('messages')
             .where('chatId', '==', activeChat.id)
             .onSnapshot(snapshot => {
                 container.innerHTML = '';
+                loadedMessages = {};
+
                 if (snapshot.empty) {
                     container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
                     return;
                 }
 
                 const msgs = [];
-                snapshot.forEach(doc => msgs.push(doc.data()));
+                snapshot.forEach(doc => {
+                    const msgData = { id: doc.id, ...doc.data() };
+                    msgs.push(msgData);
+                    loadedMessages[doc.id] = msgData;
+                });
 
                 msgs.sort((a, b) => {
                     const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
@@ -1218,6 +1336,17 @@
 
         const avatarHtml = renderAvatarContent(msg.senderPhoto, msg.senderInitials || getInitials(msg.senderName));
 
+        // Bygg svarsciteringsvy om meddelandet svarar på ett annat
+        let replyHtml = '';
+        if (msg.replyTo) {
+            replyHtml = `
+                <div class="reply-quote">
+                    <div class="reply-quote-name">${escapeHtml(msg.replyTo.senderName)}</div>
+                    <div class="reply-quote-text">${escapeHtml(msg.replyTo.text || '[Bild]')}</div>
+                </div>
+            `;
+        }
+
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isSelf ? 'self' : ''}`;
         
@@ -1227,12 +1356,53 @@
                 <div class="message-header">
                     <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                     <span class="timestamp">${timeStr}</span>
+                    <div class="message-actions">
+                        <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                        </button>
+                        ${isSelf ? `
+                        <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        ` : ''}
+                    </div>
                 </div>
+                ${replyHtml}
                 ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
                 ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
             </div>
         `;
         container.appendChild(msgDiv);
+    }
+
+    // Svars- & Raderingsfunktioner
+    function prepareReply(msgId) {
+        const msg = loadedMessages[msgId];
+        if (!msg) return;
+
+        replyingToMessage = {
+            id: msg.id,
+            senderName: msg.senderName,
+            text: msg.text || '[Bild]'
+        };
+
+        document.getElementById('reply-user-name').innerText = msg.senderName;
+        document.getElementById('reply-text-preview').innerText = msg.text || '[Bild]';
+        document.getElementById('reply-preview-bar').style.display = 'flex';
+        document.getElementById('message-input').focus();
+    }
+
+    function clearReply() {
+        replyingToMessage = null;
+        document.getElementById('reply-preview-bar').style.display = 'none';
+    }
+
+    function deleteMessage(msgId) {
+        if (!confirm('Vill du verkligen ta bort detta meddelande?')) return;
+
+        db.collection('messages').doc(msgId).delete()
+            .then(() => console.log('Meddelande borttaget'))
+            .catch(err => console.error('Fel vid borttagning:', err));
     }
 
     function sendMessage() {
@@ -1242,7 +1412,7 @@
         if (!text && !selectedImageData) return;
         if (!currentUser) return;
 
-        db.collection('messages').add({
+        const messageData = {
             chatId: activeChat.id,
             senderId: currentUser.uid,
             senderName: currentUser.name,
@@ -1251,10 +1421,17 @@
             text: text,
             image: selectedImageData || null,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        if (replyingToMessage) {
+            messageData.replyTo = replyingToMessage;
+        }
+
+        db.collection('messages').add(messageData);
 
         input.value = '';
         clearImagePreview();
+        clearReply();
     }
 
     // Bildkomprimering via Canvas
