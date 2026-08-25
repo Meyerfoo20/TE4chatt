@@ -1,0 +1,23 @@
+{
+  "name": "TE4 chatt",
+  "short_name": "TE4 Chatt",
+  "description": "Chattapplikation för TE4-portalen",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#06050a",
+  "theme_color": "#d946ef",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

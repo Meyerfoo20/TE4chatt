@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TE4 chatt</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d946ef">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-black: #06050a;
+            --bg-dark: #0d0a18;
+            --bg-glass: rgba(18, 14, 30, 0.95);
+            --bg-card: rgba(28, 20, 48, 0.6);
+            
+            --pink-main: #ec4899;
+            --pink-bright: #f472b6;
+            --purple-pink: #d946ef;
+            --purple-deep: #7e22ce;
+            --navy-dark: #0f172a;
+            
+            --gradient-pink-navy: linear-gradient(135deg, #d946ef 0%, #4338ca 50%, #0f172a 100%);
+            --gradient-btn: linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #8b5cf6 100%);
+            
+            --text-white: #ffffff;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --border-glass: rgba(217, 70, 239, 0.18);
+            --shadow-glow: 0 0 25px rgba(217, 70, 239, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(217, 70, 239, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(67, 56, 202, 0.12) 0%, transparent 50%);
+            color: var(--text-white);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+        }
+
+        /* Sidopanel Vänster */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-glass);
+            border-right: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .brand-header {
+            padding: 20px 24px;
+            background: var(--gradient-pink-navy);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-glass);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand-logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            background: #ffffff;
+            color: #d946ef;
+            font-weight: 800;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+        }
+
+        .brand-title h1 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(to right, #ffffff, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-title span {
+            font-size: 0.7rem;
+            color: var(--pink-bright);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .channels-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 14px;
+        }
+
+        .section-title {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            color: var(--pink-bright);
+            letter-spacing: 1.5px;
+            margin: 18px 0 10px 10px;
+            font-weight: 800;
+            opacity: 0.9;
+        }
+
+        .item-list {
+            list-style: none;
+        }
+
+        .item-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .item-link:hover {
+            background: rgba(217, 70, 239, 0.1);
+            color: var(--text-white);
+            border-color: var(--border-glass);
+        }
+
+        .item-link.active {
+            background: var(--gradient-btn);
+            color: var(--text-white);
+            box-shadow: var(--shadow-glow);
+            font-weight: 700;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            flex-shrink: 0;
+        }
+
+        .user-footer {
+            padding: 14px 16px;
+            background: rgba(6, 5, 10, 0.9);
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-footer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .user-footer-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-icon-action {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-action:hover {
+            color: var(--text-white);
+            background: rgba(217, 70, 239, 0.15);
+        }
+
+        /* Huvudchattområde */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-black);
+            position: relative;
+            min-width: 0;
+        }
+
+        .chat-header {
+            height: 72px;
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(13, 10, 24, 0.95);
+            z-index: 5;
+        }
+
+        .chat-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-premium {
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(217, 70, 239, 0.15);
+            color: var(--pink-bright);
+            border: 1px solid var(--purple-pink);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-mobile-toggle {
+            display: none;
+            background: rgba(217, 70, 239, 0.12);
+            border: 1px solid var(--border-glass);
+            color: var(--text-white);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-mobile-toggle:active {
+            background: rgba(217, 70, 239, 0.3);
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .message {
+            display: flex;
+            gap: 14px;
+            max-width: 80%;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.self {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .avatar-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            background: var(--gradient-btn);
+            border: 2px solid var(--text-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.3);
+            overflow: hidden;
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            background: var(--bg-card);
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            word-break: break-word;
+        }
+
+        .message.self .message-content {
+            background: linear-gradient(135deg, rgba(217, 70, 239, 0.25) 0%, rgba(67, 56, 202, 0.25) 100%);
+            border-color: rgba(244, 114, 182, 0.3);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .username {
+            font-weight: 700;
+            color: var(--text-white);
+            font-size: 0.88rem;
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .message-text {
+            font-size: 0.92rem;
+            line-height: 1.45;
+            color: #f1f5f9;
+        }
+
+        .uploaded-img {
+            margin-top: 10px;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            display: block;
+        }
+
+        .input-area {
+            padding: 16px 24px;
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .preview-box {
+            display: none;
+            margin-bottom: 12px;
+            position: relative;
+            width: fit-content;
+        }
+
+        .preview-box img {
+            max-height: 80px;
+            border-radius: 10px;
+            border: 1px solid var(--purple-pink);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .remove-img {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f43f5e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(6, 5, 10, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 6px 12px;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--pink-bright);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-white);
+            font-size: 0.95rem;
+            padding: 8px 0;
+            min-width: 0;
+        }
+
+        .btn-icon-upload {
+            background: rgba(217, 70, 239, 0.1);
+            border: 1px solid rgba(217, 70, 239, 0.25);
+            color: var(--pink-bright);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-send {
+            background: var(--gradient-btn);
+            color: var(--text-white);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.88rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        #file-input { display: none; }
+
+        /* Höger Sidopanel */
+        .right-sidebar {
+            width: 250px;
+            background: var(--bg-glass);
+            border-left: 1px solid var(--border-glass);
+            padding: 20px 16px;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-card:hover {
+            background: rgba(217, 70, 239, 0.08);
+        }
+
+        .user-card .avatar-small {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--gradient-btn);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .user-card .avatar-small img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+
+        .user-info .name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .user-info .role {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* Mobil Mörk Overlay - INGEN BLUR HÄR NU */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 90;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(4, 3, 8, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), var(--shadow-glow);
+            text-align: center;
+        }
+
+        .modal-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(6, 5, 10, 0.6);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .modal-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .modal-tab.active {
+            background: var(--gradient-btn);
+            color: white;
+        }
+
+        .modal-card h2 {
+            font-size: 1.35rem;
+            margin-bottom: 6px;
+            background: linear-gradient(to right, #ffffff, var(--pink-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-black);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            color: white;
+            font-size: 0.92rem;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: var(--pink-bright);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .avatar-edit-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 16px auto;
+            border-radius: 50%;
+            border: 2px solid var(--pink-bright);
+            box-shadow: var(--shadow-glow);
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--gradient-btn);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.8rem;
+        }
+
+        .avatar-edit-wrapper img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+
+        .avatar-edit-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .avatar-edit-wrapper:hover .avatar-edit-overlay {
+            opacity: 1;
+        }
+
+        .auth-error {
+            color: #f43f5e;
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+            display: none;
+            background: rgba(244, 63, 94, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        /* Responsive CSS för Mobiler */
+        @media (max-width: 768px) {
+            .btn-mobile-toggle {
+                display: flex;
+            }
+
+            .badge-premium {
+                display: none;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                transform: translateX(-100%);
+                box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .right-sidebar {
+                position: fixed;
+                top: 0; right: 0; bottom: 0;
+                transform: translateX(100%);
+                box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+            }
+
+            .right-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .chat-header {
+                padding: 0 16px;
+            }
+
+            .messages-container {
+                padding: 16px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .input-area {
+                padding: 12px 14px;
+            }
+
+            .btn-send span {
+                display: none;
+            }
+
+            .btn-send {
+                padding: 10px 14px;
+            }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(217, 70, 239, 0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebars()"></div>
+
+<!-- Authentication Modal -->
+<div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+        <h2>TE4 chatt</h2>
+        <p id="auth-subtitle">Logga in för att komma åt portalen</p>
+        
+        <div class="modal-tabs">
+            <button class="modal-tab active" id="tab-login" onclick="setAuthMode('login')">Logga in</button>
+            <button class="modal-tab" id="tab-register" onclick="setAuthMode('register')">Skapa konto</button>
+        </div>
+
+        <div id="auth-error" class="auth-error"></div>
+
+        <input type="text" id="auth-username" class="modal-input" placeholder="Användarnamn" style="display: none;">
+        <input type="email" id="auth-email" class="modal-input" placeholder="E-postadress">
+        <input type="password" id="auth-password" class="modal-input" placeholder="Lösenord">
+        
+        <button class="btn-send" id="btn-auth-submit" style="width: 100%; justify-content: center; padding: 14px; margin-top: 10px;" onclick="handleAuthSubmit()">
+            Logga in
+        </button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="profile-modal" style="display: none;">
+    <div class="modal-card">
+        <h2>Redigera Profil</h2>
+        <p>Uppdatera dina uppgifter och profilbild</p>
+
+        <div class="avatar-edit-wrapper" onclick="document.getElementById('profile-file-input').click()">
+            <div id="profile-avatar-display" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
+            <div class="avatar-edit-overlay">Ändra</div>
+        </div>
+        <input type="file" id="profile-file-input" accept="image/*" style="display: none;" onchange="handleProfileAvatarSelect(event)">
+
+        <input type="text" id="profile-name-input" class="modal-input" placeholder="Ditt Användarnamn">
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-send" style="flex: 1; justify-content: center;" onclick="saveProfile()">Spara Ändringar</button>
+            <button class="btn-icon-action" style="background: rgba(255,255,255,0.1); padding: 12px 18px; border-radius: 12px; color: white;" onclick="closeProfileModal()">Avbryt</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-container">
+    <!-- Vänster Sidopanel -->
+    <div class="sidebar" id="sidebar-left">
+        <div class="brand-header">
+            <div class="brand-logo-wrapper">
+                <div class="brand-logo">TE4</div>
+                <div class="brand-title">
+                    <h1>TE4 chatt</h1>
+                    <span>TE4 portalen</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="channels-container">
+            <div class="section-title">Gemensam Kanal</div>
+            <ul class="item-list">
+                <li class="item-link active" id="channel-allman" onclick="selectChannel('allman', '# allmän')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                    allmän
+                </li>
+            </ul>
+
+            <div class="section-title">Privata Chattar</div>
+            <ul class="item-list" id="dm-list">
+                <li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Väntar på anslutning...</li>
+            </ul>
+        </div>
+
+        <div class="user-footer" id="user-footer" style="display: none;">
+            <div class="user-footer-info" onclick="openProfileModal()" title="Klicka för att redigera profil">
+                <div class="avatar-small" id="user-footer-avatar" style="width:34px; height:34px;"></div>
+                <div class="user-footer-name" id="user-footer-name"></div>
+            </div>
+            <button class="btn-icon-action" onclick="openProfileModal()" title="Inställningar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="btn-icon-action" onclick="handleLogout()" title="Logga ut" style="color: #f43f5e;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-header">
+            <button class="btn-mobile-toggle" onclick="toggleSidebar('left')" aria-label="Öppna meny">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h2 id="current-chat-title"># allmän</h2>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-premium">Skyddad Anslutning</span>
+                <button class="btn-mobile-toggle" onclick="toggleSidebar('right')" aria-label="Visa online kollegor">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="messages-container" id="messages-container"></div>
+
+        <!-- Input-sektion -->
+        <div class="input-area">
+            <div class="preview-box" id="preview-box">
+                <button class="remove-img" onclick="clearImagePreview()">&times;</button>
+                <img id="image-preview-src" src="" alt="Förhandsgranskning">
+            </div>
+
+            <div class="input-wrapper">
+                <button class="btn-icon-upload" onclick="document.getElementById('file-input').click()" title="Bifoga Bild">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </button>
+                <input type="file" id="file-input" accept="image/*" onchange="handleImageSelect(event)">
+                
+                <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                
+                <button class="btn-send" onclick="sendMessage()">
+                    <span>Skicka</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Höger Sidopanel -->
+    <div class="right-sidebar" id="sidebar-right">
+        <div class="section-title">Online Kollegor</div>
+        <div id="users-online-list"></div>
+    </div>
+</div>
+
+<script>
+    // Firebase Konfiguration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
+        authDomain: "te4chatt.firebaseapp.com",
+        projectId: "te4chatt",
+        storageBucket: "te4chatt.firebasestorage.app",
+        messagingSenderId: "732475626937",
+        appId: "1:732475626937:web:6461273395e350f46e5268",
+        measurementId: "G-Z6R5G1GKWH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let authMode = 'login';
+    let activeChat = { id: 'allman', type: 'channel', name: '# allmän' };
+    let selectedImageData = null;
+    let selectedProfileAvatar = null;
+    let unsubscribeMessages = null;
+
+    // Lyssnare för Inloggningsstatus
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            const userRef = db.collection('users').doc(user.uid);
+            
+            userRef.get().then(doc => {
+                let name = user.displayName || user.email.split('@')[0];
+                let photoURL = user.photoURL || null;
+
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.name) name = data.name;
+                    if (data.photoURL) photoURL = data.photoURL;
+                }
+
+                currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    name: name,
+                    photoURL: photoURL,
+                    initials: getInitials(name)
+                };
+
+                return userRef.set({
+                    id: user.uid,
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    photoURL: currentUser.photoURL,
+                    initials: currentUser.initials,
+                    status: 'online',
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            }).then(() => {
+                document.getElementById('auth-modal').style.display = 'none';
+                document.getElementById('user-footer').style.display = 'flex';
+                updateUserFooterUI();
+                startListeners();
+            }).catch(err => {
+                console.error("Firestore fel:", err);
+                showAuthError("Det gick inte att ansluta till databasen.");
+            });
+        } else {
+            currentUser = null;
+            document.getElementById('auth-modal').style.display = 'flex';
+            document.getElementById('user-footer').style.display = 'none';
+        }
+    });
+
+    function updateUserFooterUI() {
+        if (!currentUser) return;
+        document.getElementById('user-footer-name').innerText = currentUser.name;
+        document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
+    }
+
+    // Auth Hantering
+    function setAuthMode(mode) {
+        authMode = mode;
+        document.getElementById('auth-error').style.display = 'none';
+        if (mode === 'login') {
+            document.getElementById('tab-login').classList.add('active');
+            document.getElementById('tab-register').classList.remove('active');
+            document.getElementById('auth-username').style.display = 'none';
+            document.getElementById('auth-subtitle').innerText = 'Logga in för att komma åt portalen';
+            document.getElementById('btn-auth-submit').innerText = 'Logga in';
+        } else {
+            document.getElementById('tab-register').classList.add('active');
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('auth-username').style.display = 'block';
+            document.getElementById('auth-subtitle').innerText = 'Skapa ett nytt konto i TE4 chatt';
+            document.getElementById('btn-auth-submit').innerText = 'Skapa konto';
+        }
+    }
+
+    function handleAuthSubmit() {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value;
+        const username = document.getElementById('auth-username').value.trim();
+        const btn = document.getElementById('btn-auth-submit');
+
+        document.getElementById('auth-error').style.display = 'none';
+
+        if (!email || !password) {
+            showAuthError('Vänligen fyll i både e-post och lösenord.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Bearbetar...';
+
+        if (authMode === 'register') {
+            if (!username) {
+                showAuthError('Vänligen ange ett användarnamn.');
+                btn.disabled = false;
+                btn.innerText = 'Skapa konto';
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    return userCredential.user.updateProfile({ displayName: username });
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerText = 'Skapa konto';
+                    showAuthError(translateFirebaseError(err));
+                });
+        } else {
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerText = 'Logga in';
+                    showAuthError(translateFirebaseError(err));
+                });
+        }
+    }
+
+    function showAuthError(msg) {
+        const errDiv = document.getElementById('auth-error');
+        errDiv.innerText = msg;
+        errDiv.style.display = 'block';
+    }
+
+    function translateFirebaseError(err) {
+        switch (err.code) {
+            case 'auth/email-already-in-use': return 'E-postadressen används redan. Välj "Logga in" istället.';
+            case 'auth/invalid-email': return 'Ogiltig e-postadress.';
+            case 'auth/weak-password': return 'Lösenordet måste vara minst 6 tecken.';
+            case 'auth/wrong-password': case 'auth/user-not-found': case 'auth/invalid-credential':
+                return 'Felaktig e-postadress eller lösenord.';
+            default: return err.message;
+        }
+    }
+
+    function handleLogout() {
+        if (currentUser) {
+            db.collection('users').doc(currentUser.uid).update({ status: 'offline' });
+        }
+        auth.signOut();
+    }
+
+    // Profil Redigering
+    function openProfileModal() {
+        if (!currentUser) return;
+        document.getElementById('profile-name-input').value = currentUser.name;
+        document.getElementById('profile-avatar-display').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
+        selectedProfileAvatar = currentUser.photoURL;
+        document.getElementById('profile-modal').style.display = 'flex';
+    }
+
+    function closeProfileModal() {
+        document.getElementById('profile-modal').style.display = 'none';
+    }
+
+    function handleProfileAvatarSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            resizeImage(file, 200, 200, 0.8, base64Img => {
+                selectedProfileAvatar = base64Img;
+                document.getElementById('profile-avatar-display').innerHTML = `<img src="${base64Img}" />`;
+            });
+        }
+    }
+
+    function saveProfile() {
+        const newName = document.getElementById('profile-name-input').value.trim();
+        if (!newName) return;
+
+        const newInitials = getInitials(newName);
+        
+        currentUser.name = newName;
+        currentUser.photoURL = selectedProfileAvatar;
+        currentUser.initials = newInitials;
+
+        // Uppdatera Firebase Auth
+        auth.currentUser.updateProfile({
+            displayName: newName,
+            photoURL: selectedProfileAvatar
+        });
+
+        // Uppdatera Firestore
+        db.collection('users').doc(currentUser.uid).update({
+            name: newName,
+            photoURL: selectedProfileAvatar,
+            initials: newInitials
+        }).then(() => {
+            updateUserFooterUI();
+            closeProfileModal();
+            loadMessages();
+        });
+    }
+
+    // Realtidslyssnare för Kollegor & Chattar
+    function startListeners() {
+        db.collection('users').onSnapshot(snapshot => {
+            const dmList = document.getElementById('dm-list');
+            const onlineList = document.getElementById('users-online-list');
+            dmList.innerHTML = '';
+            onlineList.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                if (u.id === currentUser.uid) return;
+
+                const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
+
+                // DM i vänstermenyn
+                const dmItem = document.createElement('li');
+                dmItem.className = `item-link ${activeChat.id === getDmChatId(u.id) ? 'active' : ''}`;
+                dmItem.onclick = () => selectDm(u);
+                dmItem.innerHTML = `<span class="status-dot"></span> ${escapeHtml(u.name)}`;
+                dmList.appendChild(dmItem);
+
+                // Online kort i högermenyn
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                userCard.onclick = () => selectDm(u);
+                userCard.innerHTML = `
+                    <div class="avatar-small">${avatarHtml}</div>
+                    <div class="user-info">
+                        <div class="name">${escapeHtml(u.name)}</div>
+                        <div class="role">Medlem</div>
+                    </div>
+                `;
+                onlineList.appendChild(userCard);
+            });
+
+            if (dmList.children.length === 0) {
+                dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare än dig ännu</li>';
+            }
+        });
+
+        loadMessages();
+    }
+
+    function getDmChatId(targetUserId) {
+        return [currentUser.uid, targetUserId].sort().join('_');
+    }
+
+    function selectChannel(id, name) {
+        activeChat = { id: id, type: 'channel', name: name };
+        document.getElementById('current-chat-title').innerText = name;
+        updateActiveUI();
+        loadMessages();
+        closeSidebars();
+    }
+
+    function selectDm(user) {
+        const chatId = getDmChatId(user.id);
+        activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user };
+        document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
+        updateActiveUI();
+        loadMessages();
+        closeSidebars();
+    }
+
+    function updateActiveUI() {
+        document.querySelectorAll('.item-link').forEach(el => el.classList.remove('active'));
+        if (activeChat.type === 'channel') {
+            document.getElementById('channel-allman').classList.add('active');
+        }
+    }
+
+    // Mobil Sidslider Hantering
+    function toggleSidebar(side) {
+        const overlay = document.getElementById('mobile-overlay');
+        const sidebar = document.getElementById(side === 'left' ? 'sidebar-left' : 'sidebar-right');
+        
+        if (sidebar.classList.contains('open')) {
+            closeSidebars();
+        } else {
+            closeSidebars();
+            sidebar.classList.add('open');
+            overlay.style.display = 'block';
+        }
+    }
+
+    function closeSidebars() {
+        document.getElementById('sidebar-left').classList.remove('open');
+        document.getElementById('sidebar-right').classList.remove('open');
+        document.getElementById('mobile-overlay').style.display = 'none';
+    }
+
+    // Ladda Meddelanden
+    function loadMessages() {
+        if (unsubscribeMessages) unsubscribeMessages();
+        const container = document.getElementById('messages-container');
+        container.innerHTML = '';
+
+        unsubscribeMessages = db.collection('messages')
+            .where('chatId', '==', activeChat.id)
+            .onSnapshot(snapshot => {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
+                    return;
+                }
+
+                const msgs = [];
+                snapshot.forEach(doc => msgs.push(doc.data()));
+
+                msgs.sort((a, b) => {
+                    const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
+                    const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                    return tA - tB;
+                });
+
+                msgs.forEach(msg => renderMessage(msg));
+                container.scrollTop = container.scrollHeight;
+            });
+    }
+
+    function renderMessage(msg) {
+        const container = document.getElementById('messages-container');
+        const isSelf = currentUser && msg.senderId === currentUser.uid;
+        
+        const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
+        const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+
+        const avatarHtml = renderAvatarContent(msg.senderPhoto, msg.senderInitials || getInitials(msg.senderName));
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${isSelf ? 'self' : ''}`;
+        
+        msgDiv.innerHTML = `
+            <div class="avatar-box">${avatarHtml}</div>
+            <div class="message-content">
+                <div class="message-header">
+                    <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
+                    <span class="timestamp">${timeStr}</span>
+                </div>
+                ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
+                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
+            </div>
+        `;
+        container.appendChild(msgDiv);
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('message-input');
+        const text = input.value.trim();
+
+        if (!text && !selectedImageData) return;
+        if (!currentUser) return;
+
+        db.collection('messages').add({
+            chatId: activeChat.id,
+            senderId: currentUser.uid,
+            senderName: currentUser.name,
+            senderInitials: currentUser.initials,
+            senderPhoto: currentUser.photoURL,
+            text: text,
+            image: selectedImageData || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        input.value = '';
+        clearImagePreview();
+    }
+
+    // Bildkomprimering via Canvas
+    function resizeImage(file, maxWidth, maxHeight, quality, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                } else {
+                    if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleImageSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            resizeImage(file, 800, 800, 0.7, base64Img => {
+                selectedImageData = base64Img;
+                document.getElementById('image-preview-src').src = selectedImageData;
+                document.getElementById('preview-box').style.display = 'block';
+            });
+        }
+    }
+
+    function clearImagePreview() {
+        selectedImageData = null;
+        document.getElementById('file-input').value = '';
+        document.getElementById('preview-box').style.display = 'none';
+    }
+
+    function renderAvatarContent(photoURL, initials) {
+        if (photoURL) {
+            return `<img src="${photoURL}" alt="Avatar" />`;
+        }
+        return initials || 'U';
+    }
+
+    function getInitials(name) {
+        if (!name) return 'U';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return name.substring(0, 2).toUpperCase();
+    }
+
+    function escapeHtml(str) {
+        return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+    }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrerad:', reg))
+            .catch(err => console.error('Service Worker fel:', err));
+    });
+}
+</script>
+
+</body>
+</html>
