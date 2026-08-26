@@ -25,8 +25,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// 4. Din PWA Offline-cachning (Uppdaterad till v6 för att tvinga rensning)
-const CACHE_NAME = 'te4-chatt-v6';
+const CACHE_NAME = 'te4-chatt-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

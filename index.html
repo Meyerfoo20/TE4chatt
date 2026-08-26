@@ -351,31 +351,33 @@
     }
 
     function saveNotificationPreference(enabled) {
-        if (!currentUser) return;
-        currentUser.notificationsEnabled = enabled;
+    if (!currentUser) return;
+    currentUser.notificationsEnabled = enabled;
 
-        if (enabled) {
-            // Hämta enhetens Push Token och spara på kontot i Firestore
-            messaging.getToken({ vapidKey: VAPID_KEY })
-                .then((currentToken) => {
-                    if (currentToken) {
-                        db.collection('users').doc(currentUser.uid).update({
-                            notificationsEnabled: true,
-                            fcmToken: currentToken
-                        });
-                    } else {
-                        console.warn('Inget FCM Token tillgängligt.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Kunde inte hämta FCM Token:', err);
-                });
-        } else {
-            db.collection('users').doc(currentUser.uid).update({
-                notificationsEnabled: false
+    if (enabled) {
+        messaging.getToken({ vapidKey: VAPID_KEY })
+            .then((currentToken) => {
+                if (currentToken) {
+                    db.collection('users').doc(currentUser.uid).update({
+                        notificationsEnabled: true,
+                        fcmToken: currentToken
+                    }).then(() => {
+                        alert("Aviseringar aktiverade och token sparad!");
+                    });
+                } else {
+                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+                }
+            })
+            .catch(err => {
+                console.error('Kunde inte hämta FCM Token:', err);
+                alert('Fel vid hämtning av token: ' + err.message);
             });
-        }
+    } else {
+        db.collection('users').doc(currentUser.uid).update({
+            notificationsEnabled: false
+        });
     }
+}
 
     function updateUserFooterUI() {
         if (!currentUser) return;
