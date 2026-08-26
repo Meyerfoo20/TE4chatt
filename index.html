@@ -190,13 +190,21 @@
             flex-shrink: 0;
         }
 
+        /* Användarfot med Profil & Aviserings-switch */
         .user-footer {
-            padding: 14px 16px;
-            background: rgba(6, 5, 10, 0.9);
+            padding: 12px 14px;
+            background: rgba(6, 5, 10, 0.95);
             border-top: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-footer-main {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            width: 100%;
         }
 
         .user-footer-info {
@@ -232,6 +240,86 @@
         .btn-icon-action:hover {
             color: var(--text-white);
             background: rgba(217, 70, 239, 0.15);
+        }
+
+        /* Notis-switch bar */
+        .notification-toggle-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(217, 70, 239, 0.08);
+            border: 1px solid rgba(217, 70, 239, 0.18);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .notification-toggle-bar:hover {
+            background: rgba(217, 70, 239, 0.13);
+            border-color: rgba(217, 70, 239, 0.35);
+        }
+
+        .notification-toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .notification-toggle-label svg {
+            color: var(--pink-bright);
+        }
+
+        /* Switch Toggle Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.15);
+            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #ffffff;
+            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        input:checked + .slider {
+            background: var(--gradient-btn);
+            border-color: var(--pink-bright);
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.45);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
         }
 
         /* Huvudchattområde */
@@ -1020,16 +1108,32 @@
         </div>
 
         <div class="user-footer" id="user-footer" style="display: none;">
-            <div class="user-footer-info" onclick="openProfileModal()" title="Klicka för att redigera profil">
-                <div class="avatar-small" id="user-footer-avatar" style="width:34px; height:34px;"></div>
-                <div class="user-footer-name" id="user-footer-name"></div>
+            <div class="user-footer-main">
+                <div class="user-footer-info" onclick="openProfileModal()" title="Klicka för att redigera profil">
+                    <div class="avatar-small" id="user-footer-avatar" style="width:34px; height:34px;"></div>
+                    <div class="user-footer-name" id="user-footer-name"></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 2px;">
+                    <button class="btn-icon-action" onclick="openProfileModal()" title="Inställningar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                    <button class="btn-icon-action" onclick="handleLogout()" title="Logga ut" style="color: #f43f5e;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
             </div>
-            <button class="btn-icon-action" onclick="openProfileModal()" title="Inställningar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-            <button class="btn-icon-action" onclick="handleLogout()" title="Logga ut" style="color: #f43f5e;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            </button>
+
+            <!-- Aviserings-switch under profilen -->
+            <div class="notification-toggle-bar">
+                <div class="notification-toggle-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span>Aviseringar</span>
+                </div>
+                <label class="switch" title="Sätt på/av aviseringar">
+                    <input type="checkbox" id="notification-switch" onchange="toggleNotifications(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
 
@@ -1117,12 +1221,50 @@
     let selectedImageData = null;
     let selectedProfileAvatar = null;
     let unsubscribeMessages = null;
+    let unsubscribeGlobalNotifications = null;
+    let isInitialNotificationLoad = true;
     let replyingToMessage = null;
     let loadedMessages = {};
     
     let allUsers = [];
     let customChannels = {};
     let editingChannelId = null;
+
+    // Ljudeffekt för inkommande notiser med Web Audio API
+    function playNotificationSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const now = ctx.currentTime;
+            
+            // Första tonen (D5 - 587.33Hz)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(587.33, now);
+            gain1.gain.setValueAtTime(0.12, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.25);
+
+            // Andra tonen (A5 - 880Hz)
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(880, now + 0.08);
+            gain2.gain.setValueAtTime(0.15, now + 0.08);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.08);
+            osc2.stop(now + 0.4);
+        } catch (e) {
+            console.log("Kunde inte spela aviseringsljud:", e);
+        }
+    }
 
     // Lyssnare för Inloggningsstatus
     auth.onAuthStateChanged(user => {
@@ -1132,11 +1274,15 @@
             userRef.get().then(doc => {
                 let name = user.displayName || user.email.split('@')[0];
                 let photoURL = user.photoURL || null;
+                let notificationsEnabled = false;
 
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.name) name = data.name;
                     if (data.photoURL) photoURL = data.photoURL;
+                    if (data.notificationsEnabled !== undefined) {
+                        notificationsEnabled = data.notificationsEnabled;
+                    }
                 }
 
                 currentUser = {
@@ -1144,7 +1290,8 @@
                     email: user.email,
                     name: name,
                     photoURL: photoURL,
-                    initials: getInitials(name)
+                    initials: getInitials(name),
+                    notificationsEnabled: notificationsEnabled
                 };
 
                 return userRef.set({
@@ -1153,6 +1300,7 @@
                     email: currentUser.email,
                     photoURL: currentUser.photoURL,
                     initials: currentUser.initials,
+                    notificationsEnabled: currentUser.notificationsEnabled,
                     status: 'online',
                     lastActive: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
@@ -1167,6 +1315,8 @@
             });
         } else {
             currentUser = null;
+            if (unsubscribeGlobalNotifications) unsubscribeGlobalNotifications();
+            if (unsubscribeMessages) unsubscribeMessages();
             document.getElementById('auth-modal').style.display = 'flex';
             document.getElementById('user-footer').style.display = 'none';
         }
@@ -1176,6 +1326,169 @@
         if (!currentUser) return;
         document.getElementById('user-footer-name').innerText = currentUser.name;
         document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
+        document.getElementById('notification-switch').checked = !!currentUser.notificationsEnabled;
+    }
+
+    // Hantera Aviserings-switch
+    async function toggleNotifications(enabled) {
+        if (!currentUser) return;
+        const switchEl = document.getElementById('notification-switch');
+
+        if (enabled) {
+            if (!("Notification" in window)) {
+                alert("Din webbläsare stöder inte webbaviseringar.");
+                switchEl.checked = false;
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                setNotificationState(true);
+                playNotificationSound();
+            } else if (Notification.permission === "denied") {
+                alert("Aviseringar är blockerade i din webbläsares inställningar. Klicka på låsikonen / webbplatsinställningar vid adressfältet och tillåt aviseringar.");
+                switchEl.checked = false;
+                setNotificationState(false);
+            } else {
+                try {
+                    const permission = await Notification.requestPermission();
+                    if (permission === "granted") {
+                        setNotificationState(true);
+                        playNotificationSound();
+                        try {
+                            new Notification("Aviseringar aktiverade! 🎉", {
+                                body: "Du kommer nu att få aviseringar varje gång någon skickar ett meddelande.",
+                                icon: 'logo.png'
+                            });
+                        } catch (e) {}
+                    } else {
+                        switchEl.checked = false;
+                        setNotificationState(false);
+                    }
+                } catch (err) {
+                    console.error("Kunde inte begära tillstånd för aviseringar:", err);
+                    switchEl.checked = false;
+                    setNotificationState(false);
+                }
+            }
+        } else {
+            setNotificationState(false);
+        }
+    }
+
+    function setNotificationState(enabled) {
+        if (!currentUser) return;
+        currentUser.notificationsEnabled = enabled;
+        document.getElementById('notification-switch').checked = enabled;
+
+        db.collection('users').doc(currentUser.uid).update({
+            notificationsEnabled: enabled
+        }).then(() => {
+            console.log("Aviseringspreferens sparades till Firebase:", enabled);
+        }).catch(err => {
+            console.error("Fel vid sparande av aviseringspreferens:", err);
+        });
+    }
+
+    // Global aviseringslyssnare för inkommande meddelanden
+    function startNotificationListener() {
+        if (unsubscribeGlobalNotifications) {
+            unsubscribeGlobalNotifications();
+        }
+
+        isInitialNotificationLoad = true;
+
+        unsubscribeGlobalNotifications = db.collection('messages')
+            .onSnapshot(snapshot => {
+                if (isInitialNotificationLoad) {
+                    isInitialNotificationLoad = false;
+                    return;
+                }
+
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const msg = { id: change.doc.id, ...change.doc.data() };
+                        handleIncomingMessageNotification(msg);
+                    }
+                });
+            }, err => {
+                console.error("Aviseringslyssnare fel:", err);
+            });
+    }
+
+    function handleIncomingMessageNotification(msg) {
+        if (!currentUser) return;
+        // Ignorera meddelanden som man själv skickat
+        if (msg.senderId === currentUser.uid) return;
+
+        // Kontrollera om användaren har aktiverat aviseringar
+        if (!currentUser.notificationsEnabled) return;
+
+        // Kontrollera om användaren har tillgång till denna chatt
+        const isPublic = (msg.chatId === 'allman');
+        const isDM = msg.chatId && msg.chatId.includes(currentUser.uid);
+        const isMemberOfChannel = customChannels[msg.chatId] &&
+            customChannels[msg.chatId].members &&
+            customChannels[msg.chatId].members.includes(currentUser.uid);
+
+        if (isPublic || isDM || isMemberOfChannel) {
+            playNotificationSound();
+            showBrowserNotification(msg);
+        }
+    }
+
+    function showBrowserNotification(msg) {
+        if (!("Notification" in window)) return;
+        if (Notification.permission !== "granted") return;
+
+        let chatTitle = '# allmän';
+        if (msg.chatId === 'allman') {
+            chatTitle = '# allmän';
+        } else if (customChannels[msg.chatId]) {
+            chatTitle = `# ${customChannels[msg.chatId].name}`;
+        } else {
+            chatTitle = 'Privat chatt';
+        }
+
+        const title = `${msg.senderName} (${chatTitle})`;
+        const bodyText = msg.text ? (msg.text.length > 80 ? msg.text.substring(0, 77) + '...' : msg.text) : (msg.image ? '📷 Skickade en bild' : 'Nytt meddelande');
+
+        const options = {
+            body: bodyText,
+            icon: msg.senderPhoto || 'logo.png',
+            badge: 'logo.png',
+            tag: `msg-${msg.id}`,
+            renotify: true
+        };
+
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, options);
+            }).catch(() => {
+                createDirectNotification(title, options, msg);
+            });
+        } else {
+            createDirectNotification(title, options, msg);
+        }
+    }
+
+    function createDirectNotification(title, options, msg) {
+        try {
+            const notif = new Notification(title, options);
+            notif.onclick = () => {
+                window.focus();
+                if (msg.chatId === 'allman') {
+                    selectChannel('allman', '# allmän', false);
+                } else if (customChannels[msg.chatId]) {
+                    selectChannel(msg.chatId, `# ${customChannels[msg.chatId].name}`, true);
+                } else {
+                    const otherUser = allUsers.find(u => u.id === msg.senderId);
+                    if (otherUser) selectDm(otherUser);
+                }
+                notif.close();
+            };
+        } catch (e) {
+            console.warn("Kunde inte skapa desktopavisering:", e);
+        }
     }
 
     // Auth Hantering
@@ -1258,6 +1571,8 @@
     }
 
     function handleLogout() {
+        if (unsubscribeGlobalNotifications) unsubscribeGlobalNotifications();
+        if (unsubscribeMessages) unsubscribeMessages();
         if (currentUser) {
             db.collection('users').doc(currentUser.uid).update({ status: 'offline' });
         }
@@ -1470,6 +1785,7 @@
         });
 
         loadMessages();
+        startNotificationListener();
     }
 
     function getDmChatId(targetUserId) {
