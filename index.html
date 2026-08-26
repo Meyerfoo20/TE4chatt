@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#d946ef">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">    
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -234,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Höger Sidopanel -->
     <div class="right-sidebar" id="sidebar-right">
         <div class="section-title">Online Kollegor</div>
         <div id="users-online-list" style="margin-top: 10px;"></div>
@@ -273,7 +272,6 @@
     let customChannels = {};
     let editingChannelId = null;
 
-    // Lyssnare för Inloggningsstatus
     auth.onAuthStateChanged(user => {
         if (user) {
             const userRef = db.collection('users').doc(user.uid);
@@ -299,7 +297,6 @@
                     notificationsEnabled: notificationsEnabled
                 };
 
-                // Sätt aviseringsknappen enligt sparad inställning
                 document.getElementById('notification-toggle').checked = notificationsEnabled;
 
                 return userRef.set({
