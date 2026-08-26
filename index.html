@@ -132,12 +132,18 @@
             padding: 16px 14px;
         }
 
+        .section-header-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 18px 0 10px 10px;
+        }
+
         .section-title {
             font-size: 0.68rem;
             text-transform: uppercase;
             color: var(--pink-bright);
             letter-spacing: 1.5px;
-            margin: 18px 0 10px 10px;
             font-weight: 800;
             opacity: 0.9;
         }
@@ -369,7 +375,7 @@
             color: var(--text-dim);
         }
 
-        /* Meddelande-åtgärder (Svara / Ta bort) */
+        /* Meddelande-åtgärder & Emojis */
         .message-actions {
             display: flex;
             gap: 4px;
@@ -392,17 +398,62 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 0.85rem;
             transition: all 0.2s;
         }
 
         .msg-action-btn:hover {
             color: var(--text-white);
             background: rgba(217, 70, 239, 0.2);
+            transform: scale(1.1);
         }
 
         .msg-action-btn.delete:hover {
             color: #f43f5e;
             background: rgba(244, 63, 94, 0.2);
+            transform: none;
+        }
+
+        /* Reactions Badges */
+        .reactions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .reaction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: rgba(6, 5, 10, 0.6);
+            border: 1px solid var(--border-glass);
+            font-size: 0.78rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .reaction-badge:hover {
+            border-color: var(--pink-bright);
+            background: rgba(217, 70, 239, 0.15);
+        }
+
+        .reaction-badge.active {
+            background: rgba(217, 70, 239, 0.25);
+            border-color: var(--pink-bright);
+            box-shadow: 0 0 10px rgba(217, 70, 239, 0.2);
+        }
+
+        .reaction-count {
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .reaction-badge.active .reaction-count {
+            color: var(--pink-bright);
         }
 
         /* Citering vid Svar i meddelande */
@@ -451,7 +502,6 @@
             border-top: 1px solid var(--border-glass);
         }
 
-        /* Svar-förhandsgranskning ovanför input */
         .reply-preview-bar {
             display: none;
             align-items: center;
@@ -628,7 +678,7 @@
             color: var(--text-muted);
         }
 
-        /* Mobil Mörk Overlay */
+        /* Modaler */
         .mobile-overlay {
             display: none;
             position: fixed;
@@ -715,6 +765,38 @@
         .modal-input:focus {
             border-color: var(--pink-bright);
             box-shadow: var(--shadow-glow);
+        }
+
+        /* Kanal Skapa/Redigera checklist */
+        .member-checkbox-list {
+            max-height: 180px;
+            overflow-y: auto;
+            background: var(--bg-black);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 8px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .member-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .member-checkbox-item:hover {
+            background: rgba(217, 70, 239, 0.1);
+        }
+
+        .member-checkbox-item input {
+            accent-color: var(--purple-pink);
+            width: 16px;
+            height: 16px;
         }
 
         .avatar-edit-wrapper {
@@ -861,6 +943,7 @@
     </div>
 </div>
 
+<!-- Profil Redigering Modal -->
 <div class="modal-overlay" id="profile-modal" style="display: none;">
     <div class="modal-card">
         <h2>Redigera Profil</h2>
@@ -881,6 +964,25 @@
     </div>
 </div>
 
+<!-- Skapa/Redigera Kanal Modal -->
+<div class="modal-overlay" id="channel-modal" style="display: none;">
+    <div class="modal-card" style="text-align: left;">
+        <h2 id="channel-modal-title" style="text-align: center;">Skapa Ny Kanal</h2>
+        <p id="channel-modal-subtitle" style="text-align: center;">Namnge kanalen och välj vilka kollegor du vill bjuda in.</p>
+
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">Kanalnamn</label>
+        <input type="text" id="channel-name-input" class="modal-input" placeholder="t.ex. projekt-x">
+
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 600;">Bjud in medlemmar</label>
+        <div class="member-checkbox-list" id="channel-members-selection"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn-send" style="flex: 1; justify-content: center;" onclick="saveChannel()">Spara Kanal</button>
+            <button class="btn-icon-action" style="background: rgba(255,255,255,0.1); padding: 12px 18px; border-radius: 12px; color: white;" onclick="closeChannelModal()">Avbryt</button>
+        </div>
+    </div>
+</div>
+
 <div class="app-container">
     <!-- Vänster Sidopanel -->
     <div class="sidebar" id="sidebar-left">
@@ -895,15 +997,23 @@
         </div>
 
         <div class="channels-container">
-            <div class="section-title">Gemensam Kanal</div>
-            <ul class="item-list">
+            <div class="section-header-box">
+                <div class="section-title">Kanaler</div>
+                <button class="btn-icon-action" onclick="openChannelModal()" title="Skapa ny kanal" style="padding: 4px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            
+            <ul class="item-list" id="channels-list">
                 <li class="item-link active" id="channel-allman" onclick="selectChannel('allman', '# allmän')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                     allmän
                 </li>
             </ul>
 
-            <div class="section-title">Privata Chattar</div>
+            <div class="section-header-box">
+                <div class="section-title">Privata Chattar</div>
+            </div>
             <ul class="item-list" id="dm-list">
                 <li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Väntar på anslutning...</li>
             </ul>
@@ -930,6 +1040,9 @@
             </button>
             <h2 id="current-chat-title"># allmän</h2>
             <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="btn-edit-channel" class="btn-icon-action" onclick="openChannelModal(activeChat.id)" title="Redigera kanal & medlemmar" style="display: none; background: rgba(217, 70, 239, 0.15); color: var(--pink-bright);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
                 <span class="badge-premium">Skyddad Anslutning</span>
                 <button class="btn-mobile-toggle" onclick="toggleSidebar('right')" aria-label="Visa online kollegor">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -978,7 +1091,7 @@
     <!-- Höger Sidopanel -->
     <div class="right-sidebar" id="sidebar-right">
         <div class="section-title">Online Kollegor</div>
-        <div id="users-online-list"></div>
+        <div id="users-online-list" style="margin-top: 10px;"></div>
     </div>
 </div>
 
@@ -1000,12 +1113,16 @@
 
     let currentUser = null;
     let authMode = 'login';
-    let activeChat = { id: 'allman', type: 'channel', name: '# allmän' };
+    let activeChat = { id: 'allman', type: 'channel', name: '# allmän', isCustom: false };
     let selectedImageData = null;
     let selectedProfileAvatar = null;
     let unsubscribeMessages = null;
     let replyingToMessage = null;
     let loadedMessages = {};
+    
+    let allUsers = [];
+    let customChannels = {};
+    let editingChannelId = null;
 
     // Lyssnare för Inloggningsstatus
     auth.onAuthStateChanged(user => {
@@ -1180,13 +1297,11 @@
         currentUser.photoURL = selectedProfileAvatar;
         currentUser.initials = newInitials;
 
-        // Uppdatera Firebase Auth
         auth.currentUser.updateProfile({
             displayName: newName,
             photoURL: selectedProfileAvatar
         });
 
-        // Uppdatera Firestore
         db.collection('users').doc(currentUser.uid).update({
             name: newName,
             photoURL: selectedProfileAvatar,
@@ -1198,9 +1313,94 @@
         });
     }
 
+    // Hantera Skapa & Redigera Kanaler
+    function openChannelModal(channelId = null) {
+        editingChannelId = channelId;
+        const titleEl = document.getElementById('channel-modal-title');
+        const subtitleEl = document.getElementById('channel-modal-subtitle');
+        const nameInput = document.getElementById('channel-name-input');
+        const membersContainer = document.getElementById('channel-members-selection');
+
+        membersContainer.innerHTML = '';
+        let existingMembers = [currentUser.uid];
+
+        if (channelId && customChannels[channelId]) {
+            titleEl.innerText = 'Redigera Kanal';
+            subtitleEl.innerText = 'Uppdatera kanalens namn eller bjuda in fler kollegor.';
+            nameInput.value = customChannels[channelId].name;
+            existingMembers = customChannels[channelId].members || [currentUser.uid];
+        } else {
+            titleEl.innerText = 'Skapa Ny Kanal';
+            subtitleEl.innerText = 'Namnge kanalen och välj vilka kollegor du vill bjuda in.';
+            nameInput.value = '';
+        }
+
+        allUsers.forEach(u => {
+            if (u.id === currentUser.uid) return;
+            const isChecked = existingMembers.includes(u.id);
+
+            const label = document.createElement('label');
+            label.className = 'member-checkbox-item';
+            label.innerHTML = `
+                <input type="checkbox" value="${u.id}" ${isChecked ? 'checked' : ''}>
+                <span style="font-size: 0.9rem; color: white;">${escapeHtml(u.name)}</span>
+            `;
+            membersContainer.appendChild(label);
+        });
+
+        if (membersContainer.children.length === 0) {
+            membersContainer.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; padding: 6px;">Inga andra användare registrerade ännu.</div>';
+        }
+
+        document.getElementById('channel-modal').style.display = 'flex';
+    }
+
+    function closeChannelModal() {
+        document.getElementById('channel-modal').style.display = 'none';
+        editingChannelId = null;
+    }
+
+    function saveChannel() {
+        const nameInput = document.getElementById('channel-name-input');
+        const name = nameInput.value.trim().toLowerCase().replace(/\s+/g, '-');
+
+        if (!name) {
+            alert('Vänligen ange ett kanalnamn.');
+            return;
+        }
+
+        const checkedBoxes = document.querySelectorAll('#channel-members-selection input[type="checkbox"]:checked');
+        const selectedMemberIds = [currentUser.uid];
+        checkedBoxes.forEach(box => selectedMemberIds.push(box.value));
+
+        if (editingChannelId) {
+            db.collection('channels').doc(editingChannelId).update({
+                name: name,
+                members: selectedMemberIds
+            }).then(() => {
+                if (activeChat.id === editingChannelId) {
+                    selectChannel(editingChannelId, `# ${name}`, true);
+                }
+                closeChannelModal();
+            });
+        } else {
+            db.collection('channels').add({
+                name: name,
+                createdBy: currentUser.uid,
+                members: selectedMemberIds,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(docRef => {
+                closeChannelModal();
+                selectChannel(docRef.id, `# ${name}`, true);
+            });
+        }
+    }
+
     // Realtidslyssnare för Kollegor & Chattar
     function startListeners() {
+        // Lyssna på användare
         db.collection('users').onSnapshot(snapshot => {
+            allUsers = [];
             const dmList = document.getElementById('dm-list');
             const onlineList = document.getElementById('users-online-list');
             dmList.innerHTML = '';
@@ -1208,6 +1408,8 @@
 
             snapshot.forEach(doc => {
                 const u = doc.data();
+                allUsers.push(u);
+
                 if (u.id === currentUser.uid) return;
 
                 const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
@@ -1234,8 +1436,37 @@
             });
 
             if (dmList.children.length === 0) {
-                dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare än dig ännu</li>';
+                dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare ännu</li>';
             }
+        });
+
+        // Lyssna på skapade kanaler
+        db.collection('channels').onSnapshot(snapshot => {
+            const channelsList = document.getElementById('channels-list');
+            channelsList.innerHTML = `
+                <li class="item-link ${activeChat.id === 'allman' ? 'active' : ''}" id="channel-allman" onclick="selectChannel('allman', '# allmän', false)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                    allmän
+                </li>
+            `;
+            customChannels = {};
+
+            snapshot.forEach(doc => {
+                const ch = { id: doc.id, ...doc.data() };
+                customChannels[ch.id] = ch;
+
+                const isMember = ch.members && ch.members.includes(currentUser.uid);
+                if (isMember) {
+                    const li = document.createElement('li');
+                    li.className = `item-link ${activeChat.id === ch.id ? 'active' : ''}`;
+                    li.onclick = () => selectChannel(ch.id, `# ${ch.name}`, true);
+                    li.innerHTML = `
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                        ${escapeHtml(ch.name)}
+                    `;
+                    channelsList.appendChild(li);
+                }
+            });
         });
 
         loadMessages();
@@ -1245,9 +1476,17 @@
         return [currentUser.uid, targetUserId].sort().join('_');
     }
 
-    function selectChannel(id, name) {
-        activeChat = { id: id, type: 'channel', name: name };
+    function selectChannel(id, name, isCustom = false) {
+        activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
         document.getElementById('current-chat-title').innerText = name;
+        
+        const editBtn = document.getElementById('btn-edit-channel');
+        if (isCustom) {
+            editBtn.style.display = 'inline-flex';
+        } else {
+            editBtn.style.display = 'none';
+        }
+
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -1256,8 +1495,10 @@
 
     function selectDm(user) {
         const chatId = getDmChatId(user.id);
-        activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user };
+        activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
+        document.getElementById('btn-edit-channel').style.display = 'none';
+        
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -1267,7 +1508,8 @@
     function updateActiveUI() {
         document.querySelectorAll('.item-link').forEach(el => el.classList.remove('active'));
         if (activeChat.type === 'channel') {
-            document.getElementById('channel-allman').classList.add('active');
+            const activeEl = document.getElementById(`channel-${activeChat.id}`);
+            if (activeEl) activeEl.classList.add('active');
         }
     }
 
@@ -1336,7 +1578,7 @@
 
         const avatarHtml = renderAvatarContent(msg.senderPhoto, msg.senderInitials || getInitials(msg.senderName));
 
-        // Bygg svarsciteringsvy om meddelandet svarar på ett annat
+        // Citering
         let replyHtml = '';
         if (msg.replyTo) {
             replyHtml = `
@@ -1345,6 +1587,30 @@
                     <div class="reply-quote-text">${escapeHtml(msg.replyTo.text || '[Bild]')}</div>
                 </div>
             `;
+        }
+
+        // Reactions-vy
+        let reactionsHtml = '';
+        if (msg.reactions) {
+            const emojis = ['❤️', '👍', '😂'];
+            let badgeListHtml = '';
+
+            emojis.forEach(emoji => {
+                const users = msg.reactions[emoji] || [];
+                if (users.length > 0) {
+                    const hasReacted = currentUser && users.includes(currentUser.uid);
+                    badgeListHtml += `
+                        <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
+                            <span>${emoji}</span>
+                            <span class="reaction-count">${users.length}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            if (badgeListHtml) {
+                reactionsHtml = `<div class="reactions-container">${badgeListHtml}</div>`;
+            }
         }
 
         const msgDiv = document.createElement('div');
@@ -1357,6 +1623,9 @@
                     <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                     <span class="timestamp">${timeStr}</span>
                     <div class="message-actions">
+                        <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                        <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                        <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
                         <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                         </button>
@@ -1370,9 +1639,32 @@
                 ${replyHtml}
                 ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
                 ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
+                ${reactionsHtml}
             </div>
         `;
         container.appendChild(msgDiv);
+    }
+
+    // Reaction Hantering
+    function toggleReaction(msgId, emoji) {
+        if (!currentUser) return;
+        const msgRef = db.collection('messages').doc(msgId);
+        
+        msgRef.get().then(doc => {
+            if (!doc.exists) return;
+            const data = doc.data();
+            const reactions = data.reactions || {};
+            const emojiUsers = reactions[emoji] || [];
+
+            let updateField = {};
+            if (emojiUsers.includes(currentUser.uid)) {
+                updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayRemove(currentUser.uid);
+            } else {
+                updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayUnion(currentUser.uid);
+            }
+
+            return msgRef.update(updateField);
+        }).catch(err => console.error("Fel vid uppdatering av reaktion:", err));
     }
 
     // Svars- & Raderingsfunktioner
@@ -1420,7 +1712,8 @@
             senderPhoto: currentUser.photoURL,
             text: text,
             image: selectedImageData || null,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            reactions: {}
         };
 
         if (replyingToMessage) {
