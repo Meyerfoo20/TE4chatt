@@ -332,30 +332,79 @@
         }
     });
 
-    // Hantering av Web Aviseringar
-    function toggleNotifications(enabled) {
-        if (!currentUser) return;
+    // Hantering av Web Aviseringar (Anpassad för mobil & Service Worker)
+function toggleNotifications(enabled) {
+    if (!currentUser) return;
 
-        if (enabled) {
-            if (!("Notification" in window)) {
-                alert("Din webbläsare stöder inte aviseringar.");
+    if (enabled) {
+        if (!("Notification" in window)) {
+            alert("Din webbläsare stöder inte aviseringar.");
+            document.getElementById('notification-toggle').checked = false;
+            return;
+        }
+
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                saveNotificationPreference(true);
+                // Skicka en testnotis via Service Worker
+                triggerMobileNotification("Aviseringar aktiverade!", "Du kommer nu få notiser för nya meddelanden.");
+            } else {
+                alert("Aviseringar nekades i enhetens inställningar.");
                 document.getElementById('notification-toggle').checked = false;
-                return;
+                saveNotificationPreference(false);
             }
+        });
+    } else {
+        saveNotificationPreference(false);
+    }
+}
 
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    saveNotificationPreference(true);
-                } else {
-                    alert("Aviseringar nekades i webbläsarens inställningar.");
-                    document.getElementById('notification-toggle').checked = false;
-                    saveNotificationPreference(false);
+// Hjälpfunktion för att skicka notis kompatibelt med mobiler
+function triggerMobileNotification(title, body, icon = 'logo.png') {
+    if (Notification.permission !== 'granted') return;
+
+    const options = {
+        body: body,
+        icon: icon,
+        badge: 'logo.png',
+        vibrate: [200, 100, 200]
+    };
+
+    // Skicka i första hand via Service Worker (krävs på mobil)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, options);
+        }).catch(() => {
+            new Notification(title, options);
+        });
+    } else {
+        new Notification(title, options);
+    }
+}
+
+function startGlobalNotificationListener() {
+    if (globalMessageUnsubscribe) globalMessageUnsubscribe();
+
+    const sessionStartTime = firebase.firestore.Timestamp.now();
+
+    globalMessageUnsubscribe = db.collection('messages')
+        .where('timestamp', '>=', sessionStartTime)
+        .onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const msg = change.doc.data();
+                    
+                    if (msg.senderId !== currentUser?.uid && currentUser?.notificationsEnabled) {
+                        triggerMobileNotification(
+                            `Nytt meddelande från ${msg.senderName}`,
+                            msg.text || (msg.image ? '📷 [Bild]' : 'Skickade ett meddelande'),
+                            msg.senderPhoto || 'logo.png'
+                        );
+                    }
                 }
             });
-        } else {
-            saveNotificationPreference(false);
-        }
-    }
+        }, err => console.error("Fel i global aviseringslyssnare:", err));
+}
 
     function saveNotificationPreference(enabled) {
         currentUser.notificationsEnabled = enabled;
@@ -364,32 +413,7 @@
         }).catch(err => console.error("Kunde inte spara aviseringsinställning:", err));
     }
 
-    function startGlobalNotificationListener() {
-        if (globalMessageUnsubscribe) globalMessageUnsubscribe();
-
-        const sessionStartTime = firebase.firestore.Timestamp.now();
-
-        globalMessageUnsubscribe = db.collection('messages')
-            .where('timestamp', '>=', sessionStartTime)
-            .onSnapshot(snapshot => {
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'added') {
-                        const msg = change.doc.data();
-                        
-                        // Skicka endast avisering om meddelandet är från någon annan och aviseringar är aktiverat
-                        if (msg.senderId !== currentUser?.uid && currentUser?.notificationsEnabled) {
-                            if (Notification.permission === 'granted') {
-                                new Notification(`Nytt meddelande från ${msg.senderName}`, {
-                                    body: msg.text || (msg.image ? '📷 [Bild]' : 'Skickade ett meddelande'),
-                                    icon: msg.senderPhoto || 'logo.png'
-                                });
-                            }
-                        }
-                    }
-                });
-            }, err => console.error("Fel i global aviseringslyssnare:", err));
-    }
-
+    
     function updateUserFooterUI() {
         if (!currentUser) return;
         document.getElementById('user-footer-name').innerText = currentUser.name;
