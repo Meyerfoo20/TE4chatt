@@ -15,10 +15,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
     <style>
-        /* CSS för aviserings-switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -61,7 +61,6 @@
 
 <div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebars()"></div>
 
-<!-- Authentication Modal -->
 <div class="modal-overlay" id="auth-modal">
     <div class="modal-card">
         <h2>TE4 chatt</h2>
@@ -84,7 +83,6 @@
     </div>
 </div>
 
-<!-- Profil Redigering Modal -->
 <div class="modal-overlay" id="profile-modal" style="display: none;">
     <div class="modal-card">
         <h2>Redigera Profil</h2>
@@ -105,7 +103,6 @@
     </div>
 </div>
 
-<!-- Skapa/Redigera Kanal Modal -->
 <div class="modal-overlay" id="channel-modal" style="display: none;">
     <div class="modal-card" style="text-align: left;">
         <h2 id="channel-modal-title" style="text-align: center;">Skapa Ny Kanal</h2>
@@ -125,7 +122,6 @@
 </div>
 
 <div class="app-container">
-    <!-- Vänster Sidopanel -->
     <div class="sidebar" id="sidebar-left">
         <div class="brand-header">
             <div class="brand-logo-wrapper">
@@ -260,6 +256,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const messaging = firebase.messaging();
+
+    const VAPID_KEY = 'BI2iabzLZjqRoaPsvWtxlwBWD4ZLjTwvoxss0mQRtF9zCp2JhgGOCVv_jLZUmtP8Qm0KJ7dZsJ5rmmgPCVFmjy0'; 
 
     let currentUser = null;
     let authMode = 'login';
@@ -267,7 +266,6 @@
     let selectedImageData = null;
     let selectedProfileAvatar = null;
     let unsubscribeMessages = null;
-    let globalMessageUnsubscribe = null;
     let replyingToMessage = null;
     let loadedMessages = {};
     
@@ -319,101 +317,69 @@
                 document.getElementById('user-footer').style.display = 'flex';
                 updateUserFooterUI();
                 startListeners();
-                startGlobalNotificationListener();
             }).catch(err => {
                 console.error("Firestore fel:", err);
                 showAuthError("Det gick inte att ansluta till databasen.");
             });
         } else {
             currentUser = null;
-            if (globalMessageUnsubscribe) globalMessageUnsubscribe();
             document.getElementById('auth-modal').style.display = 'flex';
             document.getElementById('user-footer').style.display = 'none';
         }
     });
 
-    // Hantering av Web Aviseringar (Anpassad för mobil & Service Worker)
-function toggleNotifications(enabled) {
-    if (!currentUser) return;
+    // Hantering av Web Aviseringar via Firebase Cloud Messaging (FCM)
+    function toggleNotifications(enabled) {
+        if (!currentUser) return;
 
-    if (enabled) {
-        if (!("Notification" in window)) {
-            alert("Din webbläsare stöder inte aviseringar.");
-            document.getElementById('notification-toggle').checked = false;
-            return;
-        }
-
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                saveNotificationPreference(true);
-                // Skicka en testnotis via Service Worker
-                triggerMobileNotification("Aviseringar aktiverade!", "Du kommer nu få notiser för nya meddelanden.");
-            } else {
-                alert("Aviseringar nekades i enhetens inställningar.");
+        if (enabled) {
+            if (!("Notification" in window)) {
+                alert("Din webbläsare stöder inte aviseringar.");
                 document.getElementById('notification-toggle').checked = false;
-                saveNotificationPreference(false);
+                return;
             }
-        });
-    } else {
-        saveNotificationPreference(false);
-    }
-}
 
-// Hjälpfunktion för att skicka notis kompatibelt med mobiler
-function triggerMobileNotification(title, body, icon = 'logo.png') {
-    if (Notification.permission !== 'granted') return;
-
-    const options = {
-        body: body,
-        icon: icon,
-        badge: 'logo.png',
-        vibrate: [200, 100, 200]
-    };
-
-    // Skicka i första hand via Service Worker (krävs på mobil)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification(title, options);
-        }).catch(() => {
-            new Notification(title, options);
-        });
-    } else {
-        new Notification(title, options);
-    }
-}
-
-function startGlobalNotificationListener() {
-    if (globalMessageUnsubscribe) globalMessageUnsubscribe();
-
-    const sessionStartTime = firebase.firestore.Timestamp.now();
-
-    globalMessageUnsubscribe = db.collection('messages')
-        .where('timestamp', '>=', sessionStartTime)
-        .onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    const msg = change.doc.data();
-                    
-                    if (msg.senderId !== currentUser?.uid && currentUser?.notificationsEnabled) {
-                        triggerMobileNotification(
-                            `Nytt meddelande från ${msg.senderName}`,
-                            msg.text || (msg.image ? '📷 [Bild]' : 'Skickade ett meddelande'),
-                            msg.senderPhoto || 'logo.png'
-                        );
-                    }
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    saveNotificationPreference(true);
+                } else {
+                    alert("Aviseringar nekades i webbläsarens/enhetens inställningar.");
+                    document.getElementById('notification-toggle').checked = false;
+                    saveNotificationPreference(false);
                 }
             });
-        }, err => console.error("Fel i global aviseringslyssnare:", err));
-}
-
-    function saveNotificationPreference(enabled) {
-        currentUser.notificationsEnabled = enabled;
-        db.collection('users').doc(currentUser.uid).update({
-            notificationsEnabled: enabled
-        }).catch(err => console.error("Kunde inte spara aviseringsinställning:", err));
+        } else {
+            saveNotificationPreference(false);
+        }
     }
 
-    
+    function saveNotificationPreference(enabled) {
+        if (!currentUser) return;
+        currentUser.notificationsEnabled = enabled;
+
+        if (enabled) {
+            // Hämta enhetens Push Token och spara på kontot i Firestore
+            messaging.getToken({ vapidKey: VAPID_KEY })
+                .then((currentToken) => {
+                    if (currentToken) {
+                        db.collection('users').doc(currentUser.uid).update({
+                            notificationsEnabled: true,
+                            fcmToken: currentToken
+                        });
+                    } else {
+                        console.warn('Inget FCM Token tillgängligt.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Kunde inte hämta FCM Token:', err);
+                });
+        } else {
+            db.collection('users').doc(currentUser.uid).update({
+                notificationsEnabled: false
+            });
+        }
+    }
+
     function updateUserFooterUI() {
         if (!currentUser) return;
         document.getElementById('user-footer-name').innerText = currentUser.name;
@@ -1021,11 +987,12 @@ function startGlobalNotificationListener() {
         return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
     }
 </script>
+
 <script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registrerad:', reg))
+        navigator.serviceWorker.register('firebase-messaging-sw.js')
+            .then(reg => console.log('Firebase Messaging Service Worker registrerad:', reg))
             .catch(err => console.error('Service Worker fel:', err));
     });
 }

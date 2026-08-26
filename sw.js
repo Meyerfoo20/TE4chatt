@@ -1,4 +1,4 @@
-const CACHE_NAME = 'te4-chatt-v3';
+const CACHE_NAME = 'te4-chatt-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
