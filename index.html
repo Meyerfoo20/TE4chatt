@@ -987,11 +987,11 @@
 
 <script>
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('firebase-messaging-sw.js')
-            .then(reg => console.log('Firebase Messaging Service Worker registrerad:', reg))
-            .catch(err => console.error('Service Worker fel:', err));
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./firebase-messaging-sw.js')
+      .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+      .catch(err => console.error('Service Worker fel:', err));
+  });
 }
 </script>
 
