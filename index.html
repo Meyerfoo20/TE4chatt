@@ -325,7 +325,6 @@
         }
     });
 
-    // Hantering av Web Aviseringar via Firebase Cloud Messaging (FCM)
     function toggleNotifications(enabled) {
         if (!currentUser) return;
 
@@ -381,6 +380,41 @@
         db.collection('users').doc(currentUser.uid).update({
             notificationsEnabled: false
         });
+    }
+}
+
+async function sendPushNotificationToOthers(senderName, messageText) {
+    const SERVER_KEY = 'AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ';
+
+    try {
+        const snapshot = await db.collection('users')
+            .where('notificationsEnabled', '==', true)
+            .get();
+
+        snapshot.forEach(doc => {
+            const userData = doc.data();
+            
+            if (doc.id !== currentUser.uid && userData.fcmToken) {
+                fetch('https://fcm.googleapis.com/fcm/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'key=' + SERVER_KEY
+                    },
+                    body: JSON.stringify({
+                        to: userData.fcmToken,
+                        notification: {
+                            title: `Nytt meddelande från ${senderName}`,
+                            body: messageText,
+                            icon: './logo.png',
+                            click_action: 'https://meyerfoo20.github.io/TE4chatt/'
+                        }
+                    })
+                }).catch(err => console.error('Fel vid utskick av notis:', err));
+            }
+        });
+    } catch (err) {
+        console.error('Kunde inte hämta mottagarnas tokens:', err);
     }
 }
 
@@ -918,7 +952,15 @@
             messageData.replyTo = replyingToMessage;
         }
 
-        db.collection('messages').add(messageData);
+        db.collection('messages').add({
+            text: messageText,
+            sender: currentUser.displayName || currentUser.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            sendPushNotificationToOthers(currentUser.displayName || 'En kollega', messageText);
+            
+            messageInput.value = '';
+        });
 
         input.value = '';
         clearImagePreview();

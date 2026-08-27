@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'te4-chatt-v9';
+const CACHE_NAME = 'te4-chatt-v10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -37,15 +37,21 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes('/TE4chatt/') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('https://meyerfoo20.github.io/TE4chatt/');
+      }
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
