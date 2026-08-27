@@ -1,8 +1,6 @@
-// 1. Importera Firebase SDK för Service Worker
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
-// 2. Initiera Firebase i bakgrunden
 firebase.initializeApp({
   apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
   authDomain: "te4chatt.firebaseapp.com",
@@ -14,7 +12,6 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 3. Hantera inkommande push-notiser i bakgrunden
 messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'TE4 chatt';
   const notificationOptions = {
@@ -25,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'te4-chatt-v7';
+const CACHE_NAME = 'te4-chatt-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

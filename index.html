@@ -355,23 +355,28 @@
     currentUser.notificationsEnabled = enabled;
 
     if (enabled) {
-        messaging.getToken({ vapidKey: VAPID_KEY })
-            .then((currentToken) => {
-                if (currentToken) {
-                    db.collection('users').doc(currentUser.uid).update({
-                        notificationsEnabled: true,
-                        fcmToken: currentToken
-                    }).then(() => {
-                        alert("Aviseringar aktiverade och token sparad!");
-                    });
-                } else {
-                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
-                }
-            })
-            .catch(err => {
-                console.error('Kunde inte hämta FCM Token:', err);
-                alert('Fel vid hämtning av token: ' + err.message);
+        navigator.serviceWorker.ready.then((registration) => {
+            return messaging.getToken({ 
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: registration
             });
+        })
+        .then((currentToken) => {
+            if (currentToken) {
+                db.collection('users').doc(currentUser.uid).update({
+                    notificationsEnabled: true,
+                    fcmToken: currentToken
+                }).then(() => {
+                    alert("Aviseringar aktiverade och token sparad!");
+                });
+            } else {
+                alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+            }
+        })
+        .catch(err => {
+            console.error('Kunde inte hämta FCM Token:', err);
+            alert('Fel vid hämtning av token: ' + err.message);
+        });
     } else {
         db.collection('users').doc(currentUser.uid).update({
             notificationsEnabled: false
@@ -385,7 +390,6 @@
         document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
     }
 
-    // Auth Hantering
     function setAuthMode(mode) {
         authMode = mode;
         document.getElementById('auth-error').style.display = 'none';
@@ -471,7 +475,6 @@
         auth.signOut();
     }
 
-    // Profil Redigering
     function openProfileModal() {
         if (!currentUser) return;
         document.getElementById('profile-name-input').value = currentUser.name;
@@ -520,7 +523,6 @@
         });
     }
 
-    // Hantera Skapa & Redigera Kanaler
     function openChannelModal(channelId = null) {
         editingChannelId = channelId;
         const titleEl = document.getElementById('channel-modal-title');
@@ -603,7 +605,6 @@
         }
     }
 
-    // Realtidslyssnare för Kollegor & Chattar
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -735,7 +736,6 @@
         document.getElementById('mobile-overlay').style.display = 'none';
     }
 
-    // Ladda Meddelanden för aktiv chatt
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
