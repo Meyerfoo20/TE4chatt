@@ -830,22 +830,22 @@
         if (modal && modalImg) {
             modalImg.src = src;
             modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
     }
 
     function closeLightbox(e) {
+        const modal = document.getElementById('lightbox-modal');
+        if (!modal) return;
+        
         if (!e || e.target.id === 'lightbox-modal' || e.target.classList.contains('lightbox-close')) {
-            const modal = document.getElementById('lightbox-modal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
         }
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeLightbox();
-        }
+        if (e.key === 'Escape') closeLightbox();
     });
 
     function toggleReaction(msgId, emoji) {
