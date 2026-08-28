@@ -452,7 +452,6 @@
         auth.signOut();
     }
 
-    // Profil Redigering
     function openProfileModal() {
         if (!currentUser) return;
         document.getElementById('profile-name-input').value = currentUser.name;
@@ -501,7 +500,6 @@
         });
     }
 
-    // Hantera Skapa & Redigera Kanaler
     function openChannelModal(channelId = null) {
         editingChannelId = channelId;
         const titleEl = document.getElementById('channel-modal-title');
@@ -584,7 +582,6 @@
         }
     }
 
-    // Realtidslyssnare för Kollegor & Chattar
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -716,7 +713,6 @@
         document.getElementById('mobile-overlay').style.display = 'none';
     }
 
-    // Ladda Meddelanden för aktiv chatt
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
@@ -803,30 +799,31 @@
                 <div class="message-header">
                     <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                     <span class="timestamp">${timeStr}</span>
-                    <div class="message-actions">
-                        <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
-                        <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
-                        <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
-                        <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                        </button>
-                        ${isSelf ? `
-                        <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                        ` : ''}
-                    </div>
                 </div>
                 ${replyHtml}
                 ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
                 ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openLightbox(this.src)" />` : ''}
                 ${reactionsHtml}
+                
+                <!-- Åtgärdsknappar under texten -->
+                <div class="message-actions">
+                    <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                    <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                    <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+                    <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                    </button>
+                    ${isSelf ? `
+                    <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    ` : ''}
+                </div>
             </div>
         `;
         container.appendChild(msgDiv);
     }
 
-    // Lightbox / Bildförstoring Hantering
     function openLightbox(src) {
         const modal = document.getElementById('lightbox-modal');
         const modalImg = document.getElementById('lightbox-img');
