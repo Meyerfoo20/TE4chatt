@@ -325,6 +325,7 @@
         }
     });
 
+    // Hantering av Web Aviseringar via Firebase Cloud Messaging (FCM)
     function toggleNotifications(enabled) {
         if (!currentUser) return;
 
@@ -354,67 +355,27 @@
     currentUser.notificationsEnabled = enabled;
 
     if (enabled) {
-        navigator.serviceWorker.ready.then((registration) => {
-            return messaging.getToken({ 
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: registration
+        messaging.getToken({ vapidKey: VAPID_KEY })
+            .then((currentToken) => {
+                if (currentToken) {
+                    db.collection('users').doc(currentUser.uid).update({
+                        notificationsEnabled: true,
+                        fcmToken: currentToken
+                    }).then(() => {
+                        alert("Aviseringar aktiverade och token sparad!");
+                    });
+                } else {
+                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+                }
+            })
+            .catch(err => {
+                console.error('Kunde inte hämta FCM Token:', err);
+                alert('Fel vid hämtning av token: ' + err.message);
             });
-        })
-        .then((currentToken) => {
-            if (currentToken) {
-                db.collection('users').doc(currentUser.uid).update({
-                    notificationsEnabled: true,
-                    fcmToken: currentToken
-                }).then(() => {
-                    alert("Aviseringar aktiverade och token sparad!");
-                });
-            } else {
-                alert('Ingen token kunde skapas. Kontrollera behörigheter.');
-            }
-        })
-        .catch(err => {
-            console.error('Kunde inte hämta FCM Token:', err);
-            alert('Fel vid hämtning av token: ' + err.message);
-        });
     } else {
         db.collection('users').doc(currentUser.uid).update({
             notificationsEnabled: false
         });
-    }
-}
-
-async function sendPushNotificationToOthers(senderName, messageText) {
-    const SERVER_KEY = 'AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ';
-
-    try {
-        const snapshot = await db.collection('users')
-            .where('notificationsEnabled', '==', true)
-            .get();
-
-        snapshot.forEach(doc => {
-            const userData = doc.data();
-            
-            if (doc.id !== currentUser.uid && userData.fcmToken) {
-                fetch('https://fcm.googleapis.com/fcm/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'key=' + SERVER_KEY
-                    },
-                    body: JSON.stringify({
-                        to: userData.fcmToken,
-                        notification: {
-                            title: `Nytt meddelande från ${senderName}`,
-                            body: messageText,
-                            icon: './logo.png',
-                            click_action: 'https://meyerfoo20.github.io/TE4chatt/'
-                        }
-                    })
-                }).catch(err => console.error('Fel vid utskick av notis:', err));
-            }
-        });
-    } catch (err) {
-        console.error('Kunde inte hämta mottagarnas tokens:', err);
     }
 }
 
@@ -424,6 +385,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
         document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
     }
 
+    // Auth Hantering
     function setAuthMode(mode) {
         authMode = mode;
         document.getElementById('auth-error').style.display = 'none';
@@ -509,6 +471,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
         auth.signOut();
     }
 
+    // Profil Redigering
     function openProfileModal() {
         if (!currentUser) return;
         document.getElementById('profile-name-input').value = currentUser.name;
@@ -557,6 +520,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
         });
     }
 
+    // Hantera Skapa & Redigera Kanaler
     function openChannelModal(channelId = null) {
         editingChannelId = channelId;
         const titleEl = document.getElementById('channel-modal-title');
@@ -639,6 +603,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
         }
     }
 
+    // Realtidslyssnare för Kollegor & Chattar
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -770,6 +735,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
         document.getElementById('mobile-overlay').style.display = 'none';
     }
 
+    // Ladda Meddelanden för aktiv chatt
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
@@ -952,15 +918,7 @@ async function sendPushNotificationToOthers(senderName, messageText) {
             messageData.replyTo = replyingToMessage;
         }
 
-        db.collection('messages').add({
-            text: messageText,
-            sender: currentUser.displayName || currentUser.email,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            sendPushNotificationToOthers(currentUser.displayName || 'En kollega', messageText);
-            
-            messageInput.value = '';
-        });
+        db.collection('messages').add(messageData);
 
         input.value = '';
         clearImagePreview();

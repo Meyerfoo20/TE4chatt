@@ -1,6 +1,8 @@
+// 1. Importera Firebase SDK för Service Worker
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
+// 2. Initiera Firebase i bakgrunden
 firebase.initializeApp({
   apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
   authDomain: "te4chatt.firebaseapp.com",
@@ -12,6 +14,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// 3. Hantera inkommande push-notiser i bakgrunden
 messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'TE4 chatt';
   const notificationOptions = {
@@ -22,7 +25,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'te4-chatt-v10';
+const CACHE_NAME = 'te4-chatt-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -37,28 +40,19 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes('/TE4chatt/') && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('https://meyerfoo20.github.io/TE4chatt/');
-      }
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
     })
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http') || event.request.method !== 'GET') {
-    return;
-  }
-
+  // Ignorera Firebase-anrop från cache
   if (
     event.request.url.includes('firestore.googleapis.com') ||
     event.request.url.includes('identitytoolkit') ||
@@ -70,16 +64,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, response.clone());
           return response;
-        }
-
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
         });
-
-        return response;
       });
     })
   );
