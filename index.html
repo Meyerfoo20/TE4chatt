@@ -1002,13 +1002,12 @@
         return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
     }
 
-    // Registrering av Service Worker
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./firebase-messaging-sw.js')
-                .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-                .catch(err => console.error('Service Worker fel:', err));
-        });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
+        .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+        .catch(err => console.error('Service Worker fel:', err));
+    });
     }
 </script>
 
