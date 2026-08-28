@@ -272,6 +272,19 @@
     let customChannels = {};
     let editingChannelId = null;
 
+    // Spåra om appen är öppen och aktiv i fliken/skärmen
+    let isAppVisible = document.visibilityState === 'visible';
+
+    document.addEventListener("visibilitychange", () => {
+        isAppVisible = document.visibilityState === 'visible';
+        if (currentUser) {
+            db.collection('users').doc(currentUser.uid).update({
+                inApp: isAppVisible,
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error("Kunde inte uppdatera inApp-status:", err));
+        }
+    });
+
     auth.onAuthStateChanged(user => {
         if (user) {
             const userRef = db.collection('users').doc(user.uid);
@@ -307,6 +320,7 @@
                     initials: currentUser.initials,
                     notificationsEnabled: notificationsEnabled,
                     status: 'online',
+                    inApp: isAppVisible,
                     lastActive: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
             }).then(() => {
@@ -351,33 +365,33 @@
     }
 
     function saveNotificationPreference(enabled) {
-    if (!currentUser) return;
-    currentUser.notificationsEnabled = enabled;
+        if (!currentUser) return;
+        currentUser.notificationsEnabled = enabled;
 
-    if (enabled) {
-        messaging.getToken({ vapidKey: VAPID_KEY })
-            .then((currentToken) => {
-                if (currentToken) {
-                    db.collection('users').doc(currentUser.uid).update({
-                        notificationsEnabled: true,
-                        fcmToken: currentToken
-                    }).then(() => {
-                        alert("Aviseringar aktiverade och token sparad!");
-                    });
-                } else {
-                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
-                }
-            })
-            .catch(err => {
-                console.error('Kunde inte hämta FCM Token:', err);
-                alert('Fel vid hämtning av token: ' + err.message);
+        if (enabled) {
+            messaging.getToken({ vapidKey: VAPID_KEY })
+                .then((currentToken) => {
+                    if (currentToken) {
+                        db.collection('users').doc(currentUser.uid).update({
+                            notificationsEnabled: true,
+                            fcmToken: currentToken
+                        }).then(() => {
+                            alert("Aviseringar aktiverade och token sparad!");
+                        });
+                    } else {
+                        alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Kunde inte hämta FCM Token:', err);
+                    alert('Fel vid hämtning av token: ' + err.message);
+                });
+        } else {
+            db.collection('users').doc(currentUser.uid).update({
+                notificationsEnabled: false
             });
-    } else {
-        db.collection('users').doc(currentUser.uid).update({
-            notificationsEnabled: false
-        });
+        }
     }
-}
 
     function updateUserFooterUI() {
         if (!currentUser) return;
@@ -466,7 +480,7 @@
 
     function handleLogout() {
         if (currentUser) {
-            db.collection('users').doc(currentUser.uid).update({ status: 'offline' });
+            db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
         }
         auth.signOut();
     }
@@ -895,6 +909,7 @@
             .catch(err => console.error('Fel vid borttagning:', err));
     }
 
+    // Skicka meddelande (Cloud Function triggas automatiskt när dokumentet skapas)
     function sendMessage() {
         const input = document.getElementById('message-input');
         const text = input.value.trim();
@@ -918,7 +933,8 @@
             messageData.replyTo = replyingToMessage;
         }
 
-        db.collection('messages').add(messageData);
+        db.collection('messages').add(messageData)
+            .catch(err => console.error("Fel vid sparande av meddelande:", err));
 
         input.value = '';
         clearImagePreview();
@@ -985,16 +1001,15 @@
     function escapeHtml(str) {
         return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
     }
-</script>
 
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
-      .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-      .catch(err => console.error('Service Worker fel:', err));
-  });
-}
+    // Registrering av Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./firebase-messaging-sw.js')
+                .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+                .catch(err => console.error('Service Worker fel:', err));
+        });
+    }
 </script>
 
 </body>
