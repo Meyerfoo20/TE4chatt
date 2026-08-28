@@ -990,7 +990,7 @@
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./firebase-messaging-sw.js')
+    navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
       .then(reg => console.log('Firebase Service Worker registrerad:', reg))
       .catch(err => console.error('Service Worker fel:', err));
   });

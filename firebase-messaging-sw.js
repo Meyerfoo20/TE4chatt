@@ -25,7 +25,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'te4-chatt-v8';
+const CACHE_NAME = 'te4-chatt-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -52,7 +52,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignorera Firebase-anrop från cache
   if (
     event.request.url.includes('firestore.googleapis.com') ||
     event.request.url.includes('identitytoolkit') ||
