@@ -928,60 +928,64 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(16px);
 }
-/* ==========================================
-   STILREN OCH ELEGANT MEDDELANDE-DESIGN
-   ========================================== */
-
-   .messages-container {
+.messages-container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     padding: 12px 16px;
     overflow-y: auto;
+    background: transparent;
 }
 
-/* Meddelandebubbla / Rad */
 .message {
     display: flex;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    max-width: 90%;
-    align-self: flex-start;
-    transition: background-color 0.15s ease;
+    gap: 12px;
+    padding: 2px 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100%;
+    align-self: stretch;
 }
 
-.message:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Egenhändigt skickade meddelanden */
 .message.self {
-    align-self: flex-end;
-    background-color: rgba(99, 102, 241, 0.12); /* Subtil accentfärg */
-    border-color: rgba(99, 102, 241, 0.2);
+    background: transparent !important;
+    border: none !important;
     flex-direction: row-reverse;
 }
 
-/* Avatarer */
 .avatar-box {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
     flex-shrink: 0;
     margin-top: 2px;
-}
-
-.avatar-box .avatar, 
-.avatar-box img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
+    background-color: #334155;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+}
+
+.avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Fyller ut hela cirkeln */
+    display: block;
+    border-radius: 50%;
+}
+
+.avatar-box .avatar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
     font-weight: 600;
+    color: #ffffff;
 }
 
 .message-content {
@@ -989,58 +993,21 @@ input:checked + .slider:before {
     min-width: 0;
 }
 
-.message-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 3px;
-    flex-wrap: nowrap;
+.message.self .message-content {
+    text-align: right;
 }
 
-.message-header .username {
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: #e2e8f0;
-    white-space: nowrap;
-}
-
-.message-header .timestamp {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    white-space: nowrap;
-}
-
-.message-text {
-    font-size: 0.88rem;
-    line-height: 1.4;
-    color: #f1f5f9;
-    word-break: break-word;
-}
-
-.uploaded-img,
-.chat-img-preview {
-    max-height: 220px;
-    max-width: 100%;
-    border-radius: 8px;
-    margin-top: 6px;
-    cursor: pointer;
-    object-fit: cover;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.uploaded-img:hover,
-.chat-img-preview:hover {
-    opacity: 0.92;
-    transform: scale(1.01);
+.message.self .message-header {
+    justify-content: flex-end;
 }
 
 .message-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 6px;
+    margin-top: 4px;
+    border-top: none;
+    padding-top: 0;
 }
 
 .message.self .message-actions {
@@ -1048,32 +1015,26 @@ input:checked + .slider:before {
 }
 
 .msg-action-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    border: none;
     color: #94a3b8;
     cursor: pointer;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, color 0.15s ease;
 }
 
 .msg-action-btn:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    opacity: 1;
     color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .msg-action-btn.delete:hover {
-    background-color: rgba(239, 68, 68, 0.2);
     color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-.message:hover .message-actions {
-    opacity: 1;
+    background: rgba(239, 68, 68, 0.15);
 }
 
 @media (max-width: 768px) {
