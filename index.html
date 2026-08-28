@@ -18,44 +18,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
-    <style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 18px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #334155;
-            transition: .3s;
-            border-radius: 20px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #d946ef;
-        }
-        input:checked + .slider:before {
-            transform: translateX(16px);
-        }
-    </style>
 </head>
 <body>
 
@@ -238,6 +200,11 @@
         <div class="section-title">Online Kollegor</div>
         <div id="users-online-list" style="margin-top: 10px;"></div>
     </div>
+</div>
+
+<div id="lightbox-modal" class="lightbox-modal" onclick="closeLightbox(event)">
+    <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+    <img id="lightbox-img" class="lightbox-content" src="" alt="Förstorad bild">
 </div>
 
 <script>
@@ -852,12 +819,37 @@
                 </div>
                 ${replyHtml}
                 ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
-                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
+                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openLightbox(this.src)" />` : ''}
                 ${reactionsHtml}
             </div>
         `;
         container.appendChild(msgDiv);
     }
+
+    // Lightbox / Bildförstoring Hantering
+    function openLightbox(src) {
+        const modal = document.getElementById('lightbox-modal');
+        const modalImg = document.getElementById('lightbox-img');
+        if (modal && modalImg) {
+            modalImg.src = src;
+            modal.classList.add('active');
+        }
+    }
+
+    function closeLightbox(e) {
+        if (!e || e.target.id === 'lightbox-modal' || e.target.classList.contains('lightbox-close')) {
+            const modal = document.getElementById('lightbox-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+    });
 
     function toggleReaction(msgId, emoji) {
         if (!currentUser) return;
@@ -909,7 +901,6 @@
             .catch(err => console.error('Fel vid borttagning:', err));
     }
 
-    // Skicka meddelande (Cloud Function triggas automatiskt när dokumentet skapas)
     function sendMessage() {
         const input = document.getElementById('message-input');
         const text = input.value.trim();
@@ -1003,11 +994,11 @@
     }
 
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
-        .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-        .catch(err => console.error('Service Worker fel:', err));
-    });
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
+            .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+            .catch(err => console.error('Service Worker fel:', err));
+        });
     }
 </script>
 
