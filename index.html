@@ -107,6 +107,7 @@
                 <li class="item-link active" id="channel-allman" onclick="selectChannel('allman', '# allmän')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                     allmän
+                    <span class="unread-badge" id="unread-allman"></span>
                 </li>
             </ul>
 
@@ -162,6 +163,9 @@
 
         <!-- Input-sektion -->
         <div class="input-area">
+            <!-- Skrivindikator -->
+            <div id="typing-indicator" class="typing-indicator"></div>
+
             <!-- Svar-förhandsgranskning -->
             <div class="reply-preview-bar" id="reply-preview-bar">
                 <div class="reply-preview-content">
@@ -186,7 +190,7 @@
                 </button>
                 <input type="file" id="file-input" accept="image/*" onchange="handleImageSelect(event)">
                 
-                <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." oninput="handleInputTyping()" onkeypress="if(event.key === 'Enter') sendMessage()">
                 
                 <button class="btn-send" onclick="sendMessage()">
                     <span>Skicka</span>
@@ -239,6 +243,12 @@
     let customChannels = {};
     let editingChannelId = null;
 
+    // Variabler för Skrivindikator och Olästa Badges
+    let typingTimeout = null;
+    let isTypingLocal = false;
+    let unreadCounts = {};
+    let lastReadMap = JSON.parse(localStorage.getItem('chat_last_read') || '{}');
+
     // Spåra om appen är öppen och aktiv i fliken/skärmen
     let isAppVisible = document.visibilityState === 'visible';
 
@@ -249,6 +259,10 @@
                 inApp: isAppVisible,
                 lastActive: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => console.error("Kunde inte uppdatera inApp-status:", err));
+
+            if (isAppVisible && activeChat) {
+                markChatAsRead(activeChat.id);
+            }
         }
     });
 
@@ -447,7 +461,7 @@
 
     function handleLogout() {
         if (currentUser) {
-            db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
+            db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false, typingIn: null });
         }
         auth.signOut();
     }
@@ -582,6 +596,100 @@
         }
     }
 
+    // ==========================================
+    // "SKRIVER..." INDIKATOR LOGIK
+    // ==========================================
+
+    function handleInputTyping() {
+        if (!currentUser || !activeChat) return;
+
+        if (!isTypingLocal) {
+            isTypingLocal = true;
+            db.collection('users').doc(currentUser.uid).update({ typingIn: activeChat.id }).catch(() => {});
+        }
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            stopTyping();
+        }, 2000);
+    }
+
+    function stopTyping() {
+        if (isTypingLocal && currentUser) {
+            isTypingLocal = false;
+            db.collection('users').doc(currentUser.uid).update({ typingIn: null }).catch(() => {});
+        }
+        clearTimeout(typingTimeout);
+    }
+
+    function updateTypingUI() {
+        const indicator = document.getElementById('typing-indicator');
+        if (!indicator || !activeChat) return;
+
+        const typers = allUsers.filter(u => u.id !== currentUser.uid && u.typingIn === activeChat.id);
+
+        if (typers.length === 0) {
+            indicator.innerText = '';
+        } else if (typers.length === 1) {
+            indicator.innerText = `${typers[0].name} skriver...`;
+        } else if (typers.length === 2) {
+            indicator.innerText = `${typers[0].name} och ${typers[1].name} skriver...`;
+        } else {
+            indicator.innerText = `Flera personer skriver...`;
+        }
+    }
+
+    // ==========================================
+    // OLÄSTA MEDDELANDEN (UNREAD BADGES) LOGIK
+    // ==========================================
+
+    function markChatAsRead(chatId) {
+        lastReadMap[chatId] = Date.now();
+        localStorage.setItem('chat_last_read', JSON.stringify(lastReadMap));
+        unreadCounts[chatId] = 0;
+        updateUnreadBadgesUI();
+    }
+
+    function startUnreadGlobalListener() {
+        db.collection('messages').onSnapshot(snapshot => {
+            unreadCounts = {};
+
+            snapshot.forEach(doc => {
+                const msg = doc.data();
+                if (!msg.chatId || !msg.timestamp) return;
+
+                const msgTime = msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
+                const lastRead = lastReadMap[msg.chatId] || 0;
+
+                if (msg.senderId !== (currentUser ? currentUser.uid : '') && msgTime > lastRead) {
+                    if (activeChat && activeChat.id === msg.chatId && document.visibilityState === 'visible') {
+                        lastReadMap[msg.chatId] = Date.now();
+                        localStorage.setItem('chat_last_read', JSON.stringify(lastReadMap));
+                    } else {
+                        unreadCounts[msg.chatId] = (unreadCounts[msg.chatId] || 0) + 1;
+                    }
+                }
+            });
+
+            updateUnreadBadgesUI();
+        });
+    }
+
+    function updateUnreadBadgesUI() {
+        Object.keys(unreadCounts).forEach(chatId => {
+            const badgeEl = document.getElementById(`unread-${chatId}`);
+            if (badgeEl) {
+                const count = unreadCounts[chatId] || 0;
+                if (count > 0) {
+                    badgeEl.innerText = count > 99 ? '99+' : count;
+                    badgeEl.classList.add('active');
+                } else {
+                    badgeEl.classList.remove('active');
+                }
+            }
+        });
+    }
+
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -597,11 +705,16 @@
                 if (u.id === currentUser.uid) return;
 
                 const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
+                const dmChatId = getDmChatId(u.id);
 
                 const dmItem = document.createElement('li');
-                dmItem.className = `item-link ${activeChat.id === getDmChatId(u.id) ? 'active' : ''}`;
+                dmItem.className = `item-link ${activeChat.id === dmChatId ? 'active' : ''}`;
                 dmItem.onclick = () => selectDm(u);
-                dmItem.innerHTML = `<span class="status-dot"></span> ${escapeHtml(u.name)}`;
+                dmItem.innerHTML = `
+                    <span class="status-dot"></span> 
+                    ${escapeHtml(u.name)}
+                    <span class="unread-badge" id="unread-${dmChatId}"></span>
+                `;
                 dmList.appendChild(dmItem);
 
                 const userCard = document.createElement('div');
@@ -620,6 +733,9 @@
             if (dmList.children.length === 0) {
                 dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare ännu</li>';
             }
+
+            updateTypingUI();
+            updateUnreadBadgesUI();
         });
 
         db.collection('channels').onSnapshot(snapshot => {
@@ -628,6 +744,7 @@
                 <li class="item-link ${activeChat.id === 'allman' ? 'active' : ''}" id="channel-allman" onclick="selectChannel('allman', '# allmän', false)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                     allmän
+                    <span class="unread-badge" id="unread-allman"></span>
                 </li>
             `;
             customChannels = {};
@@ -644,13 +761,17 @@
                     li.innerHTML = `
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                         ${escapeHtml(ch.name)}
+                        <span class="unread-badge" id="unread-${ch.id}"></span>
                     `;
                     channelsList.appendChild(li);
                 }
             });
+
+            updateUnreadBadgesUI();
         });
 
         loadMessages();
+        startUnreadGlobalListener();
     }
 
     function getDmChatId(targetUserId) {
@@ -658,6 +779,7 @@
     }
 
     function selectChannel(id, name, isCustom = false) {
+        stopTyping();
         activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
         document.getElementById('current-chat-title').innerText = name;
         
@@ -668,6 +790,7 @@
             editBtn.style.display = 'none';
         }
 
+        markChatAsRead(id);
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -675,11 +798,13 @@
     }
 
     function selectDm(user) {
+        stopTyping();
         const chatId = getDmChatId(user.id);
         activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
         document.getElementById('btn-edit-channel').style.display = 'none';
         
+        markChatAsRead(chatId);
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -805,7 +930,6 @@
                 ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openLightbox(this.src)" />` : ''}
                 ${reactionsHtml}
                 
-                <!-- Åtgärdsknappar under texten -->
                 <div class="message-actions">
                     <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
                     <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
@@ -899,6 +1023,7 @@
     }
 
     function sendMessage() {
+        stopTyping();
         const input = document.getElementById('message-input');
         const text = input.value.trim();
 
