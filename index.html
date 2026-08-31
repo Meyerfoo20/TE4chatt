@@ -18,261 +18,353 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
+
     <style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 18px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #334155;
-            transition: .3s;
+        /* Modern & Mobilanpassad Kalender Styling */
+        .calendar-modal-content {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 20px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #d946ef;
-        }
-        input:checked + .slider:before {
-            transform: translateX(16px);
-        }
-
-        /* --- MODERNISERADE CHATTBUBBLOR --- */
-        .messages-container {
+            width: 94vw;
+            max-width: 1100px;
+            height: 88vh;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 20px 16px;
-        }
-
-        .message {
-            display: flex;
-            gap: 12px;
-            max-width: 80%;
-            align-self: flex-start;
-        }
-
-        .message.self {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .message-content-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            max-width: 100%;
-        }
-
-        .message.self .message-content-wrapper {
-            align-items: flex-end;
-        }
-
-        /* Uppdaterad bubbeldesign */
-        .message-bubble {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 18px;
-            border-top-left-radius: 4px;
-            padding: 12px 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
             position: relative;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(217, 70, 239, 0.3);
-            word-break: break-word;
-            backdrop-filter: blur(8px);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            color: #ffffff;
+            box-sizing: border-box;
         }
 
-        .message-bubble:hover {
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        .calendar-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-right: 36px;
         }
 
-        /* Egna bubblor (Jag) */
-        .message.self .message-bubble {
-            border-radius: 18px;
-            border-top-right-radius: 4px;
-            background: linear-gradient(135deg, #15803d 0%, #064e3b 100%);
-            border: 1px solid rgba(34, 197, 94, 0.4);
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .message-header {
+        .calendar-nav {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 6px;
+            gap: 8px;
         }
 
-        .username {
-            font-weight: 700;
-            font-size: 0.82rem;
-            color: #f1f5f9;
-            letter-spacing: 0.2px;
-        }
-
-        .timestamp {
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
-
-        .edited-tag {
-            font-size: 0.65rem;
-            color: #94a3b8;
-            font-style: italic;
-            margin-left: 2px;
-        }
-
-        .message-text {
-            font-size: 0.95rem;
-            line-height: 1.45;
-            color: #f8fafc;
-            font-weight: 400;
-        }
-
-        .uploaded-img {
-            max-width: 100%;
-            border-radius: 12px;
-            margin-top: 8px;
+        .calendar-nav button, .save-btn {
+            background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(217, 70, 239, 0.25);
         }
 
-        .uploaded-img:hover {
-            opacity: 0.95;
+        .calendar-nav button:hover, .save-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 70, 239, 0.35);
+        }
+
+        .calendar-nav button:active, .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .calendar-nav .nav-text-full {
+            display: inline;
+        }
+
+        .calendar-nav .nav-text-short {
+            display: none;
+        }
+
+        .calendar-grid-container {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            background: rgba(6, 5, 10, 0.6);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(160px, 1fr));
+            min-width: 800px;
+            height: 100%;
+        }
+
+        .day-column {
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .day-column:last-child {
+            border-right: none;
+        }
+
+        .day-header {
+            background: rgba(217, 70, 239, 0.12);
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #f0abfc;
+            letter-spacing: 0.3px;
+        }
+
+        .day-events {
+            flex: 1;
+            position: relative;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .calendar-event {
+            background: rgba(217, 70, 239, 0.2);
+            border-left: 3px solid #d946ef;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            transition: transform 0.15s ease;
+        }
+
+        .calendar-event:hover {
             transform: scale(1.01);
         }
 
-        /* Valbara reaktioner & aktiva badges under bubblan */
-        .message-footer-actions {
+        .calendar-event.planering {
+            background: rgba(255, 255, 255, 0.08);
+            border-left-color: #94a3b8;
+            color: #e2e8f0;
+        }
+
+        .calendar-event.custom {
+            border-left-color: #a855f7;
+            background: rgba(168, 85, 247, 0.22);
+        }
+
+        .event-row-split {
             display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
-        }
-
-        .reaction-picker {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 2px 4px;
-        }
-
-        .emoji-btn {
-            background: none;
-            border: none;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 6px;
-            transition: transform 0.1s;
-        }
-
-        .emoji-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .reactions-container {
-            display: flex;
-            flex-wrap: wrap;
             gap: 4px;
+            width: 100%;
         }
 
-        .reaction-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
+        .event-row-split .calendar-event {
+            flex: 1;
+        }
+
+        /* Styling för "Lägg till händelse"-kortet */
+        .event-form-content {
             background: #0f172a;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 2px 7px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-
-        .reaction-badge.active {
-            border-color: #d946ef;
-            background: rgba(217, 70, 239, 0.2);
-        }
-
-        /* Lightbox Pop-up för förstorade bilder */
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.88);
-            backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .image-modal-content {
-            max-width: 90vw;
-            max-height: 85vh;
-            border-radius: 14px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            object-fit: contain;
-        }
-
-        .image-modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            padding: 24px 20px;
+            border-radius: 18px;
+            width: 90vw;
+            max-width: 380px;
             color: white;
-            font-size: 32px;
-            font-weight: bold;
-            cursor: pointer;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            width: 44px;
-            height: 44px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+            box-sizing: border-box;
+        }
+
+        .event-form-content h3 {
+            margin: 0 0 16px 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .event-form-content .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 1.3rem;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s ease;
         }
 
-        @media (max-width: 600px) {
-            .messages-container {
-                padding: 12px 10px;
-                gap: 12px;
+        .event-form-content .modal-close-btn:hover {
+            background: rgba(244, 63, 94, 0.2);
+            color: #f43f5e;
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
+        .event-form-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-form-content input[type="text"],
+        .event-form-content input[type="time"],
+        .event-form-content select {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .event-form-content select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d946ef' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        .event-form-content select option {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px;
+        }
+
+        .event-form-content input:focus,
+        .event-form-content select:focus {
+            border-color: #d946ef;
+            box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-inputs .form-group {
+            flex: 1;
+        }
+
+        .event-form-content .save-btn {
+            margin-top: 6px;
+            width: 100%;
+            padding: 11px;
+            font-size: 0.9rem;
+        }
+
+        /* Anpassningar för mobila skärmar */
+        @media (max-width: 640px) {
+            .calendar-modal-content {
+                width: 96vw;
+                height: 92vh;
+                padding: 14px;
+                border-radius: 16px;
             }
 
-            .message {
-                max-width: 88%;
+            .calendar-header {
+                padding-right: 32px;
+                margin-bottom: 12px;
                 gap: 8px;
             }
 
-            .message-bubble {
-                padding: 9px 12px;
-                border-radius: 14px;
+            .calendar-header h2 {
+                font-size: 1.1rem;
             }
 
-            .message-text {
-                font-size: 0.88rem;
+            .calendar-nav {
+                width: 100%;
+                justify-content: space-between;
+                gap: 6px;
+            }
+
+            .calendar-nav button, .save-btn {
+                padding: 7px 10px;
+                font-size: 0.78rem;
+                border-radius: 8px;
+            }
+
+            .calendar-nav .nav-text-full {
+                display: none;
+            }
+
+            .calendar-nav .nav-text-short {
+                display: inline;
+            }
+
+            .add-event-btn {
+                margin-left: auto;
+            }
+
+            .calendar-grid {
+                min-width: 680px;
+            }
+
+            .day-header {
+                font-size: 0.78rem;
+                padding: 8px 4px;
+            }
+
+            .calendar-event {
+                padding: 6px 8px;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -281,7 +373,6 @@
 
 <div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebars()"></div>
 
-<!-- Image Lightbox Modal -->
 <div id="image-modal" class="image-modal" onclick="closeImageModal()">
     <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
     <img id="image-modal-src" class="image-modal-content" src="" alt="Förstorad bild">
@@ -357,6 +448,14 @@
                     <span>TE4 portalen</span>
                 </div>
             </div>
+            <button class="btn-icon-action" id="calendar-btn" onclick="openCalendarModal()" title="Öppna Kalender" style="margin-left: auto;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </button>
         </div>
 
         <div class="channels-container">
@@ -463,6 +562,72 @@
     </div>
 </div>
 
+<div id="calendar-modal" class="image-modal" style="display:none; z-index: 9999;">
+    <div class="calendar-modal-content">
+        <button class="image-modal-close" onclick="closeCalendarModal()">&times;</button>
+        <div class="calendar-header">
+            <h2 id="calendar-month-year">Schema & Kalender</h2>
+            <div class="calendar-nav">
+                <button onclick="changeWeek(-1)" aria-label="Föregående vecka">
+                    <span>&larr;</span>
+                    <span class="nav-text-full">Föregående</span>
+                    <span class="nav-text-short">Föreg.</span>
+                </button>
+                <button onclick="changeWeek(1)" aria-label="Nästa vecka">
+                    <span class="nav-text-full">Nästa</span>
+                    <span class="nav-text-short">Nästa</span>
+                    <span>&rarr;</span>
+                </button>
+                <button onclick="openAddEventModal()" class="add-event-btn">
+                    <span>+</span>
+                    <span class="nav-text-full">Lägg till</span>
+                </button>
+            </div>
+        </div>
+        <div class="calendar-grid-container">
+            <div class="calendar-grid" id="calendar-grid">
+                </div>
+        </div>
+    </div>
+</div>
+
+<div id="add-event-modal" class="image-modal" style="display:none; z-index: 10001;">
+    <div class="event-form-content">
+        <button class="modal-close-btn" onclick="closeAddEventModal()">&times;</button>
+        <h3>Lägg till ny händelse</h3>
+        <form id="add-event-form" onsubmit="saveCustomEvent(event)">
+            <div class="form-group">
+                <label for="event-title">Titel / Ämne</label>
+                <input type="text" id="event-title" placeholder="t.ex. Projektmöte" required />
+            </div>
+
+            <div class="form-group">
+                <label for="event-day">Dag</label>
+                <select id="event-day" required>
+                    <option value="1">Måndag</option>
+                    <option value="2">Tisdag</option>
+                    <option value="3">Onsdag</option>
+                    <option value="4">Torsdag</option>
+                    <option value="5">Fredag</option>
+                </select>
+            </div>
+
+            <div class="time-inputs">
+                <div class="form-group">
+                    <label for="event-start">Starttid</label>
+                    <input type="time" id="event-start" required />
+                </div>
+                <div class="form-group">
+                    <label for="event-end">Sluttid</label>
+                    <input type="time" id="event-end" required />
+                </div>
+            </div>
+
+            <button type="submit" class="save-btn">Spara händelse</button>
+        </form>
+    </div>
+</div>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
@@ -496,6 +661,41 @@
     let editingChannelId = null;
 
     let isAppVisible = document.visibilityState === 'visible';
+
+    // Kalender-tillstånd med schemat
+    const baseSchedule = [
+        // Måndag
+        { day: 1, title: 'MJUKVARUDESIGN LWA', start: '08:30', end: '09:40' },
+        { day: 1, title: 'MJUKVARUDESIGN JN', start: '09:50', end: '11:00' },
+        { day: 1, title: 'MJUKVARUDESIGN VK', start: '12:05', end: '13:30' },
+        { day: 1, title: 'MJUKVARUDESIGN', start: '13:35', end: '15:30' },
+
+        // Tisdag
+        { day: 2, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
+        { day: 2, title: 'MJUKVARUDESIGN VK', start: '09:35', end: '11:00' },
+        { day: 2, title: 'MJUKVARUDESIGN', start: '12:00', end: '12:55' },
+        { day: 2, title: 'MJUKVARUDESIGN LWA', start: '13:00', end: '14:25' },
+        { day: 2, title: 'MJUKVARUDESIGN', start: '14:30', end: '15:30' },
+
+        // Onsdag
+        { day: 3, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
+        { day: 3, title: 'MJUKVARUDESIGN LWA', start: '09:40', end: '11:05' },
+        { day: 3, title: 'PLANERINGSTID JN,VK,LWA', start: '11:45', end: '13:10', isPlanering: true },
+        { day: 3, title: 'MJUKVARUDESIGN', start: '13:15', end: '15:30' },
+
+        // Torsdag
+        { day: 4, title: 'MJUKVARUDESIGN VK', start: '08:30', end: '09:35' },
+        { day: 4, title: 'MJUKVARUDESIGN', start: '09:40', end: '11:05' },
+        { day: 4, title: 'MJUKVARUDESIGN', start: '12:00', end: '13:15' },
+        { day: 4, title: 'MJUKVARUDESIGN JN', start: '13:20', end: '15:30' },
+
+        // Fredag
+        { day: 5, title: 'MJUKVARUDESIGN LWA,JN', start: '08:30', end: '09:50' },
+        { day: 5, title: 'MJUKVARUDESIGN', start: '12:00', end: '15:30' }
+    ];
+
+    let currentWeekOffset = 0;
+    let customEvents = [];
 
     document.addEventListener("visibilitychange", () => {
         isAppVisible = document.visibilityState === 'visible';
@@ -561,6 +761,175 @@
         }
     });
 
+    // --- KALENDER LOGIK ---
+    function openCalendarModal() {
+        currentWeekOffset = 0;
+        document.getElementById('calendar-modal').style.display = 'flex';
+        loadCalendarEvents();
+    }
+
+    function closeCalendarModal() {
+        document.getElementById('calendar-modal').style.display = 'none';
+    }
+
+    function openAddEventModal() {
+        document.getElementById('add-event-modal').style.display = 'flex';
+    }
+
+    function closeAddEventModal() {
+        document.getElementById('add-event-modal').style.display = 'none';
+    }
+
+    function changeWeek(direction) {
+        currentWeekOffset += direction;
+        renderCalendar();
+    }
+
+    function loadCalendarEvents() {
+        db.collection('calendar_events').onSnapshot(snapshot => {
+            customEvents = [];
+            snapshot.forEach(doc => {
+                customEvents.push({ id: doc.id, ...doc.data() });
+            });
+            renderCalendar();
+        }, err => {
+            console.error("Kunde inte hämta kalenderhändelser:", err);
+            renderCalendar();
+        });
+    }
+
+    async function saveCustomEvent(e) {
+        e.preventDefault();
+        const title = document.getElementById('event-title').value.trim();
+        const day = parseInt(document.getElementById('event-day').value);
+        const start = document.getElementById('event-start').value;
+        const end = document.getElementById('event-end').value;
+
+        try {
+            await db.collection('calendar_events').add({
+                title,
+                day,
+                start,
+                end,
+                createdBy: currentUser ? currentUser.uid : 'Anonym',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeAddEventModal();
+            document.getElementById('add-event-form').reset();
+        } catch (err) {
+            console.error("Fel vid sparande av händelse: ", err);
+            alert("Det gick inte att spara händelsen.");
+        }
+    }
+
+    function getMonday(d) {
+        d = new Date(d);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
+    }
+
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        const dayNames = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
+
+        const now = new Date();
+        const targetMonday = getMonday(now);
+        targetMonday.setDate(targetMonday.getDate() + (currentWeekOffset * 7));
+
+        const weekNum = getWeekNumber(targetMonday);
+        
+        const headerTitle = document.getElementById('calendar-month-year');
+        if (headerTitle) {
+            const currentTag = currentWeekOffset === 0 ? " (Nu)" : "";
+            headerTitle.innerText = `Vecka ${weekNum}${currentTag}`;
+        }
+
+        dayNames.forEach((name, index) => {
+            const dayNum = index + 1;
+            const dayDate = new Date(targetMonday);
+            dayDate.setDate(targetMonday.getDate() + index);
+
+            const dayStr = `${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
+
+            const col = document.createElement('div');
+            col.className = 'day-column';
+
+            const header = document.createElement('div');
+            header.className = 'day-header';
+            header.innerText = `${name} ${dayStr}`;
+            col.appendChild(header);
+
+            const eventsContainer = document.createElement('div');
+            eventsContainer.className = 'day-events';
+
+            const dayEvents = [
+                ...baseSchedule.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: true })),
+                ...customEvents.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: false }))
+            ].sort((a, b) => a.start.localeCompare(b.start));
+
+            const groups = groupOverlappingEvents(dayEvents);
+
+            groups.forEach(group => {
+                if (group.length > 1) {
+                    const splitRow = document.createElement('div');
+                    splitRow.className = 'event-row-split';
+                    group.forEach(ev => splitRow.appendChild(createEventElement(ev)));
+                    eventsContainer.appendChild(splitRow);
+                } else if (group.length === 1) {
+                    eventsContainer.appendChild(createEventElement(group[0]));
+                }
+            });
+
+            col.appendChild(eventsContainer);
+            grid.appendChild(col);
+        });
+    }
+
+    function createEventElement(ev) {
+        const el = document.createElement('div');
+        let extraClass = '';
+        if (ev.isPlanering) extraClass = 'planering';
+        if (!ev.isBase) extraClass = 'custom';
+
+        el.className = `calendar-event ${extraClass}`;
+        el.innerHTML = `<strong>${escapeHtml(ev.title)}</strong><br/><small>${ev.start} - ${ev.end}</small>`;
+        return el;
+    }
+
+    function groupOverlappingEvents(events) {
+        const groups = [];
+        events.forEach(event => {
+            let added = false;
+            for (let group of groups) {
+                if (group.some(e => checkOverlap(e, event))) {
+                    group.push(event);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added) {
+                groups.push([event]);
+            }
+        });
+        return groups;
+    }
+
+    function checkOverlap(e1, e2) {
+        return e1.start < e2.end && e2.start < e1.end;
+    }
+
+    // --- CHATT & PROFIL LOGIK ---
     function openImageModal(src) {
         document.getElementById('image-modal-src').src = src;
         document.getElementById('image-modal').style.display = 'flex';
@@ -1173,7 +1542,6 @@
         if (!text && !selectedImageData) return;
         if (!currentUser) return;
 
-        // Om vi är i redigeringsläge
         if (editingMessageId) {
             db.collection('messages').doc(editingMessageId).update({
                 text: text,
@@ -1185,7 +1553,6 @@
             return;
         }
 
-        // Skicka nytt meddelande
         const messageData = {
             chatId: activeChat.id,
             senderId: currentUser.uid,
@@ -1272,11 +1639,11 @@
     }
 
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
-        .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-        .catch(err => console.error('Service Worker fel:', err));
-    });
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
+            .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+            .catch(err => console.error('Service Worker fel:', err));
+        });
     }
 </script>
 
