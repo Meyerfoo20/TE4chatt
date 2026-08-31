@@ -55,6 +55,136 @@
         input:checked + .slider:before {
             transform: translateX(16px);
         }
+
+        /* --- NY DESIGN & MOBILANPASSNING FÖR CHATTFLÖDE --- */
+        
+        /* Mer luftigt flöde */
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 16px;
+        }
+
+        /* Generella chattbubblor */
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+            align-self: flex-start;
+        }
+
+        .message.self {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            max-width: 100%;
+        }
+
+        .message.self .message-content-wrapper {
+            align-items: flex-end;
+        }
+
+        /* Själva bubblan med ramar */
+        .message-bubble {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 10px 14px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1.5px solid #d946ef; /* Standard ramfärg för andra */
+            word-break: break-word;
+        }
+
+        /* Egen färg (Grön border för "jag") */
+        .message.self .message-bubble {
+            border-color: #22c55e;
+            background: #0f172a;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #f8fafc;
+        }
+
+        /* Reaktioner placerade PRECIST UNDER bubblan */
+        .reactions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .reaction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 2px 7px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .reaction-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .reaction-badge.active {
+            border-color: #d946ef;
+            background: rgba(217, 70, 239, 0.2);
+        }
+
+        /* Mobil-specifika optimeringar */
+        @media (max-width: 600px) {
+            .messages-container {
+                padding: 10px 8px;
+                gap: 10px;
+            }
+
+            .message {
+                max-width: 90%;
+                gap: 6px;
+            }
+
+            .message-bubble {
+                padding: 7px 10px;
+                border-radius: 12px;
+            }
+
+            .message-text {
+                font-size: 0.85rem;
+                line-height: 1.3;
+            }
+
+            .username {
+                font-size: 0.75rem;
+            }
+
+            .timestamp {
+                font-size: 0.65rem;
+            }
+
+            .avatar-box {
+                width: 28px;
+                height: 28px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -162,7 +292,6 @@
                 <div class="user-footer-name" id="user-footer-name"></div>
             </div>
 
-            <!-- Aviseringar Switch -->
             <div title="Aviseringar på/av" style="display: flex; align-items: center; margin: 0 4px;">
                 <label class="switch">
                     <input type="checkbox" id="notification-toggle" onchange="toggleNotifications(this.checked)">
@@ -198,9 +327,7 @@
 
         <div class="messages-container" id="messages-container"></div>
 
-        <!-- Input-sektion -->
         <div class="input-area">
-            <!-- Svar-förhandsgranskning -->
             <div class="reply-preview-bar" id="reply-preview-bar">
                 <div class="reply-preview-content">
                     <span class="reply-preview-user">Svarar på <span id="reply-user-name"></span></span>
@@ -272,7 +399,6 @@
     let customChannels = {};
     let editingChannelId = null;
 
-    // Spåra om appen är öppen och aktiv i fliken/skärmen
     let isAppVisible = document.visibilityState === 'visible';
 
     document.addEventListener("visibilitychange", () => {
@@ -339,7 +465,6 @@
         }
     });
 
-    // Hantering av Web Aviseringar via Firebase Cloud Messaging (FCM)
     function toggleNotifications(enabled) {
         if (!currentUser) return;
 
@@ -403,7 +528,6 @@
         document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
     }
 
-    // Auth Hantering
     function setAuthMode(mode) {
         authMode = mode;
         document.getElementById('auth-error').style.display = 'none';
@@ -489,7 +613,6 @@
         auth.signOut();
     }
 
-    // Profil Redigering
     function openProfileModal() {
         if (!currentUser) return;
         document.getElementById('profile-name-input').value = currentUser.name;
@@ -538,7 +661,6 @@
         });
     }
 
-    // Hantera Skapa & Redigera Kanaler
     function openChannelModal(channelId = null) {
         editingChannelId = channelId;
         const titleEl = document.getElementById('channel-modal-title');
@@ -593,7 +715,6 @@
             alert('Vänligen ange ett kanalnamn.');
             return;
         }
-        
 
         const checkedBoxes = document.querySelectorAll('#channel-members-selection input[type="checkbox"]:checked');
         const selectedMemberIds = [currentUser.uid];
@@ -622,7 +743,6 @@
         }
     }
 
-    // Realtidslyssnare för Kollegor & Chattar
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -756,7 +876,6 @@
         document.getElementById('mobile-overlay').style.display = 'none';
     }
 
-    // Ladda Meddelanden för aktiv chatt
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
@@ -792,6 +911,7 @@
             });
     }
 
+    /* OMARBETAD MEDDELANDERENDERING FÖR NY STRUKTUR OCH REAKTIONER PLACERING */
     function renderMessage(msg) {
         const container = document.getElementById('messages-container');
         const isSelf = currentUser && msg.senderId === currentUser.uid;
@@ -838,28 +958,30 @@
         msgDiv.className = `message ${isSelf ? 'self' : ''}`;
         
         msgDiv.innerHTML = `
-            <div class="avatar-box">${avatarHtml}</div>
-            <div class="message-content">
-                <div class="message-header">
-                    <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
-                    <span class="timestamp">${timeStr}</span>
-                    <div class="message-actions">
-                        <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
-                        <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
-                        <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
-                        <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                        </button>
-                        ${isSelf ? `
-                        <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                        ` : ''}
+            <div class="avatar-box" style="flex-shrink:0;">${avatarHtml}</div>
+            <div class="message-content-wrapper">
+                <div class="message-bubble">
+                    <div class="message-header">
+                        <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
+                        <span class="timestamp">${timeStr}</span>
+                        <div class="message-actions">
+                            <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                            <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                            <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+                            <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                            </button>
+                            ${isSelf ? `
+                            <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                            ` : ''}
+                        </div>
                     </div>
+                    ${replyHtml}
+                    ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
+                    ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
                 </div>
-                ${replyHtml}
-                ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
-                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
                 ${reactionsHtml}
             </div>
         `;
@@ -916,7 +1038,6 @@
             .catch(err => console.error('Fel vid borttagning:', err));
     }
 
-    // Skicka meddelande (Cloud Function triggas automatiskt när dokumentet skapas)
     function sendMessage() {
         const input = document.getElementById('message-input');
         const text = input.value.trim();
