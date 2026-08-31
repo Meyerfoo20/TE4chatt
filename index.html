@@ -56,18 +56,18 @@
             transform: translateX(16px);
         }
 
-        /* --- DESIGN FÖR CHATTFLÖDE --- */
+        /* --- MODERNISERADE CHATTBUBBLOR --- */
         .messages-container {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            padding: 16px;
+            gap: 16px;
+            padding: 20px 16px;
         }
 
         .message {
             display: flex;
-            gap: 10px;
-            max-width: 85%;
+            gap: 12px;
+            max-width: 80%;
             align-self: flex-start;
         }
 
@@ -87,46 +87,77 @@
             align-items: flex-end;
         }
 
-        /* Chattbubbla med ramfärg */
+        /* Uppdaterad bubbeldesign */
         .message-bubble {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 10px 14px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            padding: 12px 16px;
             position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 1.5px solid #d946ef; /* Standard lila/rosa ram */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(217, 70, 239, 0.3);
             word-break: break-word;
+            backdrop-filter: blur(8px);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
 
-        /* Egen ramfärg för "jag" */
+        .message-bubble:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Egna bubblor (Jag) */
         .message.self .message-bubble {
-            border-color: #22c55e; /* Grön ram */
-            background: #0f172a;
+            border-radius: 18px;
+            border-top-right-radius: 4px;
+            background: linear-gradient(135deg, #15803d 0%, #064e3b 100%);
+            border: 1px solid rgba(34, 197, 94, 0.4);
         }
 
         .message-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .username {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: #f1f5f9;
+            letter-spacing: 0.2px;
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .edited-tag {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            font-style: italic;
+            margin-left: 2px;
         }
 
         .message-text {
             font-size: 0.95rem;
-            line-height: 1.4;
+            line-height: 1.45;
             color: #f8fafc;
+            font-weight: 400;
         }
 
         .uploaded-img {
             max-width: 100%;
-            border-radius: 10px;
-            margin-top: 6px;
+            border-radius: 12px;
+            margin-top: 8px;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         .uploaded-img:hover {
-            opacity: 0.9;
+            opacity: 0.95;
+            transform: scale(1.01);
         }
 
         /* Valbara reaktioner & aktiva badges under bubblan */
@@ -191,8 +222,8 @@
             position: fixed;
             z-index: 2000;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -201,8 +232,8 @@
         .image-modal-content {
             max-width: 90vw;
             max-height: 85vh;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             object-fit: contain;
         }
 
@@ -224,39 +255,24 @@
             justify-content: center;
         }
 
-        /* Mobil-optimeringar */
         @media (max-width: 600px) {
             .messages-container {
-                padding: 10px 8px;
-                gap: 10px;
+                padding: 12px 10px;
+                gap: 12px;
             }
 
             .message {
-                max-width: 90%;
-                gap: 6px;
+                max-width: 88%;
+                gap: 8px;
             }
 
             .message-bubble {
-                padding: 7px 10px;
-                border-radius: 12px;
+                padding: 9px 12px;
+                border-radius: 14px;
             }
 
             .message-text {
-                font-size: 0.85rem;
-                line-height: 1.3;
-            }
-
-            .username {
-                font-size: 0.75rem;
-            }
-
-            .timestamp {
-                font-size: 0.65rem;
-            }
-
-            .avatar-box {
-                width: 28px;
-                height: 28px;
+                font-size: 0.88rem;
             }
         }
     </style>
@@ -410,10 +426,10 @@
         <div class="input-area">
             <div class="reply-preview-bar" id="reply-preview-bar">
                 <div class="reply-preview-content">
-                    <span class="reply-preview-user">Svarar på <span id="reply-user-name"></span></span>
+                    <span class="reply-preview-user" id="reply-preview-title">Svarar på</span>
                     <span class="reply-preview-text" id="reply-text-preview"></span>
                 </div>
-                <button class="remove-img" style="position: static;" onclick="clearReply()">&times;</button>
+                <button class="remove-img" style="position: static;" onclick="clearReplyOrEdit()">&times;</button>
             </div>
 
             <div class="preview-box" id="preview-box">
@@ -433,8 +449,8 @@
                 
                 <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
                 
-                <button class="btn-send" onclick="sendMessage()">
-                    <span>Skicka</span>
+                <button class="btn-send" id="btn-send-msg" onclick="sendMessage()">
+                    <span id="btn-send-text">Skicka</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
@@ -472,6 +488,7 @@
     let selectedProfileAvatar = null;
     let unsubscribeMessages = null;
     let replyingToMessage = null;
+    let editingMessageId = null;
     let loadedMessages = {};
     
     let allUsers = [];
@@ -920,7 +937,7 @@
         }
 
         updateActiveUI();
-        clearReply();
+        clearReplyOrEdit();
         loadMessages();
         closeSidebars();
     }
@@ -932,7 +949,7 @@
         document.getElementById('btn-edit-channel').style.display = 'none';
         
         updateActiveUI();
-        clearReply();
+        clearReplyOrEdit();
         loadMessages();
         closeSidebars();
     }
@@ -999,10 +1016,6 @@
             });
     }
 
-    /* Uppdaterad meddelanderendering:
-       - Valbara reaktioner och aktiva reaktioner ligger under chattbubblan.
-       - Bildklick öppnar pop-up istället för ny flik.
-    */
     function renderMessage(msg) {
         const container = document.getElementById('messages-container');
         const isSelf = currentUser && msg.senderId === currentUser.uid;
@@ -1022,7 +1035,6 @@
             `;
         }
 
-        // Rendera redan gjorda reaktioner
         let activeBadgesHtml = '';
         if (msg.reactions) {
             const emojis = ['❤️', '👍', '😂'];
@@ -1050,11 +1062,15 @@
                     <div class="message-header">
                         <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                         <span class="timestamp">${timeStr}</span>
+                        ${msg.isEdited ? `<span class="edited-tag">(redigerad)</span>` : ''}
                         <div class="message-actions">
                             <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                             </button>
                             ${isSelf ? `
+                            <button class="msg-action-btn" title="Redigera" onclick="prepareEdit('${msg.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
                             <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
@@ -1066,7 +1082,6 @@
                     ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openImageModal('${msg.image}')" />` : ''}
                 </div>
 
-                <!-- Reaktionsknappar + badges direkt under bubblan -->
                 <div class="message-footer-actions">
                     <div class="reaction-picker">
                         <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
@@ -1102,6 +1117,7 @@
     }
 
     function prepareReply(msgId) {
+        clearReplyOrEdit();
         const msg = loadedMessages[msgId];
         if (!msg) return;
 
@@ -1111,15 +1127,35 @@
             text: msg.text || '[Bild]'
         };
 
-        document.getElementById('reply-user-name').innerText = msg.senderName;
+        document.getElementById('reply-preview-title').innerText = `Svarar på ${msg.senderName}`;
         document.getElementById('reply-text-preview').innerText = msg.text || '[Bild]';
         document.getElementById('reply-preview-bar').style.display = 'flex';
         document.getElementById('message-input').focus();
     }
 
-    function clearReply() {
+    function prepareEdit(msgId) {
+        clearReplyOrEdit();
+        const msg = loadedMessages[msgId];
+        if (!msg) return;
+
+        editingMessageId = msg.id;
+
+        document.getElementById('reply-preview-title').innerText = 'Redigerar meddelande';
+        document.getElementById('reply-text-preview').innerText = msg.text || '';
+        document.getElementById('reply-preview-bar').style.display = 'flex';
+
+        const input = document.getElementById('message-input');
+        input.value = msg.text || '';
+        input.focus();
+
+        document.getElementById('btn-send-text').innerText = 'Spara';
+    }
+
+    function clearReplyOrEdit() {
         replyingToMessage = null;
+        editingMessageId = null;
         document.getElementById('reply-preview-bar').style.display = 'none';
+        document.getElementById('btn-send-text').innerText = 'Skicka';
     }
 
     function deleteMessage(msgId) {
@@ -1137,6 +1173,19 @@
         if (!text && !selectedImageData) return;
         if (!currentUser) return;
 
+        // Om vi är i redigeringsläge
+        if (editingMessageId) {
+            db.collection('messages').doc(editingMessageId).update({
+                text: text,
+                isEdited: true
+            }).catch(err => console.error("Fel vid redigering:", err));
+
+            input.value = '';
+            clearReplyOrEdit();
+            return;
+        }
+
+        // Skicka nytt meddelande
         const messageData = {
             chatId: activeChat.id,
             senderId: currentUser.uid,
@@ -1158,7 +1207,7 @@
 
         input.value = '';
         clearImagePreview();
-        clearReply();
+        clearReplyOrEdit();
     }
 
     function resizeImage(file, maxWidth, maxHeight, quality, callback) {
