@@ -11,51 +11,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
-    <style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 18px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #334155;
-            transition: .3s;
-            border-radius: 20px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #d946ef;
-        }
-        input:checked + .slider:before {
-            transform: translateX(16px);
-        }
-    </style>
 </head>
 <body>
 
@@ -65,7 +27,7 @@
     <div class="modal-card">
         <h2>TE4 chatt</h2>
         <p id="auth-subtitle">Logga in för att komma åt portalen</p>
-        
+
         <div class="modal-tabs">
             <button class="modal-tab active" id="tab-login" onclick="setAuthMode('login')">Logga in</button>
             <button class="modal-tab" id="tab-register" onclick="setAuthMode('register')">Skapa konto</button>
@@ -76,7 +38,7 @@
         <input type="text" id="auth-username" class="modal-input" placeholder="Användarnamn" style="display: none;">
         <input type="email" id="auth-email" class="modal-input" placeholder="E-postadress">
         <input type="password" id="auth-password" class="modal-input" placeholder="Lösenord">
-        
+
         <button class="btn-send" id="btn-auth-submit" style="width: 100%; justify-content: center; padding: 14px; margin-top: 10px;" onclick="handleAuthSubmit()">
             Logga in
         </button>
@@ -140,11 +102,12 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
-            
+
             <ul class="item-list" id="channels-list">
                 <li class="item-link active" id="channel-allman" onclick="selectChannel('allman', '# allmän')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                     allmän
+                    <span class="unread-badge" id="unread-allman"></span>
                 </li>
             </ul>
 
@@ -200,6 +163,9 @@
 
         <!-- Input-sektion -->
         <div class="input-area">
+            <!-- Skrivindikator -->
+            <div id="typing-indicator" class="typing-indicator"></div>
+
             <!-- Svar-förhandsgranskning -->
             <div class="reply-preview-bar" id="reply-preview-bar">
                 <div class="reply-preview-content">
@@ -223,9 +189,10 @@
                     </svg>
                 </button>
                 <input type="file" id="file-input" accept="image/*" onchange="handleImageSelect(event)">
-                
+
                 <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
-                
+                <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." oninput="handleInputTyping()" onkeypress="if(event.key === 'Enter') sendMessage()">
+
                 <button class="btn-send" onclick="sendMessage()">
                     <span>Skicka</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -238,6 +205,11 @@
         <div class="section-title">Online Kollegor</div>
         <div id="users-online-list" style="margin-top: 10px;"></div>
     </div>
+</div>
+
+<div id="lightbox-modal" class="lightbox-modal" onclick="closeLightbox(event)">
+    <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+    <img id="lightbox-img" class="lightbox-content" src="" alt="Förstorad bild">
 </div>
 
 <script>
@@ -267,10 +239,16 @@
     let unsubscribeMessages = null;
     let replyingToMessage = null;
     let loadedMessages = {};
-    
+
     let allUsers = [];
     let customChannels = {};
     let editingChannelId = null;
+
+    // Variabler för Skrivindikator och Olästa Badges
+    let typingTimeout = null;
+    let isTypingLocal = false;
+    let unreadCounts = {};
+    let lastReadMap = JSON.parse(localStorage.getItem('chat_last_read') || '{}');
 
     // Spåra om appen är öppen och aktiv i fliken/skärmen
     let isAppVisible = document.visibilityState === 'visible';
@@ -282,13 +260,17 @@
                 inApp: isAppVisible,
                 lastActive: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => console.error("Kunde inte uppdatera inApp-status:", err));
+
+            if (isAppVisible && activeChat) {
+                markChatAsRead(activeChat.id);
+            }
         }
     });
 
     auth.onAuthStateChanged(user => {
         if (user) {
             const userRef = db.collection('users').doc(user.uid);
-            
+
             userRef.get().then(doc => {
                 let name = user.displayName || user.email.split('@')[0];
                 let photoURL = user.photoURL || null;
@@ -364,32 +346,28 @@
         }
     }
 
-    async function saveNotificationPreference(enabled) {
+    function saveNotificationPreference(enabled) {
         if (!currentUser) return;
         currentUser.notificationsEnabled = enabled;
 
         if (enabled) {
-            try {
-                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-
-                const currentToken = await messaging.getToken({
-                    vapidKey: VAPID_KEY,
-                    serviceWorkerRegistration: registration
+            messaging.getToken({ vapidKey: VAPID_KEY })
+                .then((currentToken) => {
+                    if (currentToken) {
+                        db.collection('users').doc(currentUser.uid).update({
+                            notificationsEnabled: true,
+                            fcmToken: currentToken
+                        }).then(() => {
+                            alert("Aviseringar aktiverade och token sparad!");
+                        });
+                    } else {
+                        alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Kunde inte hämta FCM Token:', err);
+                    alert('Fel vid hämtning av token: ' + err.message);
                 });
-
-                if (currentToken) {
-                    await db.collection('users').doc(currentUser.uid).update({
-                        notificationsEnabled: true,
-                        fcmToken: currentToken
-                    });
-                    alert("Aviseringar aktiverade!");
-                } else {
-                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
-                }
-            } catch (err) {
-                console.error('Kunde inte hämta FCM Token:', err);
-                alert('Fel vid aktivering av aviseringar: ' + err.message);
-            }
         } else {
             db.collection('users').doc(currentUser.uid).update({
                 notificationsEnabled: false
@@ -485,11 +463,11 @@
     function handleLogout() {
         if (currentUser) {
             db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
+            db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false, typingIn: null });
         }
         auth.signOut();
     }
 
-    // Profil Redigering
     function openProfileModal() {
         if (!currentUser) return;
         document.getElementById('profile-name-input').value = currentUser.name;
@@ -517,7 +495,7 @@
         if (!newName) return;
 
         const newInitials = getInitials(newName);
-        
+
         currentUser.name = newName;
         currentUser.photoURL = selectedProfileAvatar;
         currentUser.initials = newInitials;
@@ -538,7 +516,6 @@
         });
     }
 
-    // Hantera Skapa & Redigera Kanaler
     function openChannelModal(channelId = null) {
         editingChannelId = channelId;
         const titleEl = document.getElementById('channel-modal-title');
@@ -621,7 +598,100 @@
         }
     }
 
-    // Realtidslyssnare för Kollegor & Chattar
+    // ==========================================
+    // "SKRIVER..." INDIKATOR LOGIK
+    // ==========================================
+
+    function handleInputTyping() {
+        if (!currentUser || !activeChat) return;
+
+        if (!isTypingLocal) {
+            isTypingLocal = true;
+            db.collection('users').doc(currentUser.uid).update({ typingIn: activeChat.id }).catch(() => {});
+        }
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            stopTyping();
+        }, 2000);
+    }
+
+    function stopTyping() {
+        if (isTypingLocal && currentUser) {
+            isTypingLocal = false;
+            db.collection('users').doc(currentUser.uid).update({ typingIn: null }).catch(() => {});
+        }
+        clearTimeout(typingTimeout);
+    }
+
+    function updateTypingUI() {
+        const indicator = document.getElementById('typing-indicator');
+        if (!indicator || !activeChat) return;
+
+        const typers = allUsers.filter(u => u.id !== currentUser.uid && u.typingIn === activeChat.id);
+
+        if (typers.length === 0) {
+            indicator.innerText = '';
+        } else if (typers.length === 1) {
+            indicator.innerText = `${typers[0].name} skriver...`;
+        } else if (typers.length === 2) {
+            indicator.innerText = `${typers[0].name} och ${typers[1].name} skriver...`;
+        } else {
+            indicator.innerText = `Flera personer skriver...`;
+        }
+    }
+
+    // ==========================================
+    // OLÄSTA MEDDELANDEN (UNREAD BADGES) LOGIK
+    // ==========================================
+
+    function markChatAsRead(chatId) {
+        lastReadMap[chatId] = Date.now();
+        localStorage.setItem('chat_last_read', JSON.stringify(lastReadMap));
+        unreadCounts[chatId] = 0;
+        updateUnreadBadgesUI();
+    }
+
+    function startUnreadGlobalListener() {
+        db.collection('messages').onSnapshot(snapshot => {
+            unreadCounts = {};
+
+            snapshot.forEach(doc => {
+                const msg = doc.data();
+                if (!msg.chatId || !msg.timestamp) return;
+
+                const msgTime = msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
+                const lastRead = lastReadMap[msg.chatId] || 0;
+
+                if (msg.senderId !== (currentUser ? currentUser.uid : '') && msgTime > lastRead) {
+                    if (activeChat && activeChat.id === msg.chatId && document.visibilityState === 'visible') {
+                        lastReadMap[msg.chatId] = Date.now();
+                        localStorage.setItem('chat_last_read', JSON.stringify(lastReadMap));
+                    } else {
+                        unreadCounts[msg.chatId] = (unreadCounts[msg.chatId] || 0) + 1;
+                    }
+                }
+            });
+
+            updateUnreadBadgesUI();
+        });
+    }
+
+    function updateUnreadBadgesUI() {
+        Object.keys(unreadCounts).forEach(chatId => {
+            const badgeEl = document.getElementById(`unread-${chatId}`);
+            if (badgeEl) {
+                const count = unreadCounts[chatId] || 0;
+                if (count > 0) {
+                    badgeEl.innerText = count > 99 ? '99+' : count;
+                    badgeEl.classList.add('active');
+                } else {
+                    badgeEl.classList.remove('active');
+                }
+            }
+        });
+    }
+
     function startListeners() {
         db.collection('users').onSnapshot(snapshot => {
             allUsers = [];
@@ -637,11 +707,18 @@
                 if (u.id === currentUser.uid) return;
 
                 const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
+                const dmChatId = getDmChatId(u.id);
 
                 const dmItem = document.createElement('li');
                 dmItem.className = `item-link ${activeChat.id === getDmChatId(u.id) ? 'active' : ''}`;
+                dmItem.className = `item-link ${activeChat.id === dmChatId ? 'active' : ''}`;
                 dmItem.onclick = () => selectDm(u);
                 dmItem.innerHTML = `<span class="status-dot"></span> ${escapeHtml(u.name)}`;
+                dmItem.innerHTML = `
+                    <span class="status-dot"></span> 
+                    ${escapeHtml(u.name)}
+                    <span class="unread-badge" id="unread-${dmChatId}"></span>
+                `;
                 dmList.appendChild(dmItem);
 
                 const userCard = document.createElement('div');
@@ -660,16 +737,18 @@
             if (dmList.children.length === 0) {
                 dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare ännu</li>';
             }
+
+            updateTypingUI();
+            updateUnreadBadgesUI();
         });
 
-        db.collection('channels')
-        .where('members', 'array-contains', currentUser.uid)
-        .onSnapshot(snapshot => {
+        db.collection('channels').onSnapshot(snapshot => {
             const channelsList = document.getElementById('channels-list');
             channelsList.innerHTML = `
                 <li class="item-link ${activeChat.id === 'allman' ? 'active' : ''}" id="channel-allman" onclick="selectChannel('allman', '# allmän', false)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                     allmän
+                    <span class="unread-badge" id="unread-allman"></span>
                 </li>
             `;
             customChannels = {};
@@ -686,13 +765,17 @@
                     li.innerHTML = `
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
                         ${escapeHtml(ch.name)}
+                        <span class="unread-badge" id="unread-${ch.id}"></span>
                     `;
                     channelsList.appendChild(li);
                 }
             });
+
+            updateUnreadBadgesUI();
         });
 
         loadMessages();
+        startUnreadGlobalListener();
     }
 
     function getDmChatId(targetUserId) {
@@ -700,9 +783,10 @@
     }
 
     function selectChannel(id, name, isCustom = false) {
+        stopTyping();
         activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
         document.getElementById('current-chat-title').innerText = name;
-        
+
         const editBtn = document.getElementById('btn-edit-channel');
         if (isCustom) {
             editBtn.style.display = 'inline-flex';
@@ -710,6 +794,7 @@
             editBtn.style.display = 'none';
         }
 
+        markChatAsRead(id);
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -717,11 +802,13 @@
     }
 
     function selectDm(user) {
+        stopTyping();
         const chatId = getDmChatId(user.id);
         activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
         document.getElementById('btn-edit-channel').style.display = 'none';
-        
+
+        markChatAsRead(chatId);
         updateActiveUI();
         clearReply();
         loadMessages();
@@ -739,7 +826,7 @@
     function toggleSidebar(side) {
         const overlay = document.getElementById('mobile-overlay');
         const sidebar = document.getElementById(side === 'left' ? 'sidebar-left' : 'sidebar-right');
-        
+
         if (sidebar.classList.contains('open')) {
             closeSidebars();
         } else {
@@ -755,7 +842,6 @@
         document.getElementById('mobile-overlay').style.display = 'none';
     }
 
-    // Ladda Meddelanden för aktiv chatt
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
@@ -794,7 +880,7 @@
     function renderMessage(msg) {
         const container = document.getElementById('messages-container');
         const isSelf = currentUser && msg.senderId === currentUser.uid;
-        
+
         const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
         const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
 
@@ -835,40 +921,66 @@
 
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isSelf ? 'self' : ''}`;
-        
+
         msgDiv.innerHTML = `
             <div class="avatar-box">${avatarHtml}</div>
             <div class="message-content">
                 <div class="message-header">
                     <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                     <span class="timestamp">${timeStr}</span>
-                    <div class="message-actions">
-                        <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
-                        <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
-                        <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
-                        <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                        </button>
-                        ${isSelf ? `
-                        <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                        ` : ''}
-                    </div>
                 </div>
                 ${replyHtml}
                 ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
-                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
+                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openLightbox(this.src)" />` : ''}
                 ${reactionsHtml}
+                
+                <!-- Åtgärdsknappar under texten -->
+                <div class="message-actions">
+                    <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                    <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                    <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+                    <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                    </button>
+                    ${isSelf ? `
+                    <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    ` : ''}
+                </div>
             </div>
         `;
         container.appendChild(msgDiv);
     }
 
+    function openLightbox(src) {
+        const modal = document.getElementById('lightbox-modal');
+        const modalImg = document.getElementById('lightbox-img');
+        if (modal && modalImg) {
+            modalImg.src = src;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeLightbox(e) {
+        const modal = document.getElementById('lightbox-modal');
+        if (!modal) return;
+
+        if (!e || e.target.id === 'lightbox-modal' || e.target.classList.contains('lightbox-close')) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
     function toggleReaction(msgId, emoji) {
         if (!currentUser) return;
         const msgRef = db.collection('messages').doc(msgId);
-        
+
         msgRef.get().then(doc => {
             if (!doc.exists) return;
             const data = doc.data();
@@ -915,8 +1027,8 @@
             .catch(err => console.error('Fel vid borttagning:', err));
     }
 
-    // Skicka meddelande (Cloud Function triggas automatiskt när dokumentet skapas)
     function sendMessage() {
+        stopTyping();
         const input = document.getElementById('message-input');
         const text = input.value.trim();
 
@@ -1009,13 +1121,12 @@
     }
 
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
-        .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-        .catch(err => console.error('Service Worker fel:', err));
-    });
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
+            .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+            .catch(err => console.error('Service Worker fel:', err));
+        });
     }
 </script>
 
 </body>
-</html>
