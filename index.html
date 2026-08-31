@@ -56,9 +56,7 @@
             transform: translateX(16px);
         }
 
-        /* --- NY DESIGN & MOBILANPASSNING FÖR CHATTFLÖDE --- */
-        
-        /* Mer luftigt flöde */
+        /* --- DESIGN FÖR CHATTFLÖDE --- */
         .messages-container {
             display: flex;
             flex-direction: column;
@@ -66,7 +64,6 @@
             padding: 16px;
         }
 
-        /* Generella chattbubblor */
         .message {
             display: flex;
             gap: 10px;
@@ -90,20 +87,20 @@
             align-items: flex-end;
         }
 
-        /* Själva bubblan med ramar */
+        /* Chattbubbla med ramfärg */
         .message-bubble {
             background: #1e293b;
             border-radius: 16px;
             padding: 10px 14px;
             position: relative;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 1.5px solid #d946ef; /* Standard ramfärg för andra */
+            border: 1.5px solid #d946ef; /* Standard lila/rosa ram */
             word-break: break-word;
         }
 
-        /* Egen färg (Grön border för "jag") */
+        /* Egen ramfärg för "jag" */
         .message.self .message-bubble {
-            border-color: #22c55e;
+            border-color: #22c55e; /* Grön ram */
             background: #0f172a;
         }
 
@@ -120,12 +117,55 @@
             color: #f8fafc;
         }
 
-        /* Reaktioner placerade PRECIST UNDER bubblan */
+        .uploaded-img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .uploaded-img:hover {
+            opacity: 0.9;
+        }
+
+        /* Valbara reaktioner & aktiva badges under bubblan */
+        .message-footer-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .reaction-picker {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2px 4px;
+        }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 6px;
+            transition: transform 0.1s;
+        }
+
+        .emoji-btn:hover {
+            transform: scale(1.2);
+        }
+
         .reactions-container {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            margin-top: 4px;
         }
 
         .reaction-badge {
@@ -138,11 +178,6 @@
             padding: 2px 7px;
             font-size: 0.75rem;
             cursor: pointer;
-            transition: transform 0.1s ease;
-        }
-
-        .reaction-badge:hover {
-            transform: scale(1.05);
         }
 
         .reaction-badge.active {
@@ -150,7 +185,46 @@
             background: rgba(217, 70, 239, 0.2);
         }
 
-        /* Mobil-specifika optimeringar */
+        /* Lightbox Pop-up för förstorade bilder */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .image-modal-content {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobil-optimeringar */
         @media (max-width: 600px) {
             .messages-container {
                 padding: 10px 8px;
@@ -190,6 +264,12 @@
 <body>
 
 <div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebars()"></div>
+
+<!-- Image Lightbox Modal -->
+<div id="image-modal" class="image-modal" onclick="closeImageModal()">
+    <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
+    <img id="image-modal-src" class="image-modal-content" src="" alt="Förstorad bild">
+</div>
 
 <div class="modal-overlay" id="auth-modal">
     <div class="modal-card">
@@ -368,7 +448,6 @@
 </div>
 
 <script>
-    // Firebase Konfiguration
     const firebaseConfig = {
         apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
         authDomain: "te4chatt.firebaseapp.com",
@@ -464,6 +543,15 @@
             document.getElementById('user-footer').style.display = 'none';
         }
     });
+
+    function openImageModal(src) {
+        document.getElementById('image-modal-src').src = src;
+        document.getElementById('image-modal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+        document.getElementById('image-modal').style.display = 'none';
+    }
 
     function toggleNotifications(enabled) {
         if (!currentUser) return;
@@ -911,7 +999,10 @@
             });
     }
 
-    /* OMARBETAD MEDDELANDERENDERING FÖR NY STRUKTUR OCH REAKTIONER PLACERING */
+    /* Uppdaterad meddelanderendering:
+       - Valbara reaktioner och aktiva reaktioner ligger under chattbubblan.
+       - Bildklick öppnar pop-up istället för ny flik.
+    */
     function renderMessage(msg) {
         const container = document.getElementById('messages-container');
         const isSelf = currentUser && msg.senderId === currentUser.uid;
@@ -931,16 +1022,15 @@
             `;
         }
 
-        let reactionsHtml = '';
+        // Rendera redan gjorda reaktioner
+        let activeBadgesHtml = '';
         if (msg.reactions) {
             const emojis = ['❤️', '👍', '😂'];
-            let badgeListHtml = '';
-
             emojis.forEach(emoji => {
                 const users = msg.reactions[emoji] || [];
                 if (users.length > 0) {
                     const hasReacted = currentUser && users.includes(currentUser.uid);
-                    badgeListHtml += `
+                    activeBadgesHtml += `
                         <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
                             <span>${emoji}</span>
                             <span class="reaction-count">${users.length}</span>
@@ -948,10 +1038,6 @@
                     `;
                 }
             });
-
-            if (badgeListHtml) {
-                reactionsHtml = `<div class="reactions-container">${badgeListHtml}</div>`;
-            }
         }
 
         const msgDiv = document.createElement('div');
@@ -965,9 +1051,6 @@
                         <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
                         <span class="timestamp">${timeStr}</span>
                         <div class="message-actions">
-                            <button class="msg-action-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
-                            <button class="msg-action-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
-                            <button class="msg-action-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
                             <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                             </button>
@@ -980,9 +1063,18 @@
                     </div>
                     ${replyHtml}
                     ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
-                    ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="window.open('${msg.image}', '_blank')" />` : ''}
+                    ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openImageModal('${msg.image}')" />` : ''}
                 </div>
-                ${reactionsHtml}
+
+                <!-- Reaktionsknappar + badges direkt under bubblan -->
+                <div class="message-footer-actions">
+                    <div class="reaction-picker">
+                        <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                        <button class="emoji-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                        <button class="emoji-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+                    </div>
+                    ${activeBadgesHtml ? `<div class="reactions-container">${activeBadgesHtml}</div>` : ''}
+                </div>
             </div>
         `;
         container.appendChild(msgDiv);
