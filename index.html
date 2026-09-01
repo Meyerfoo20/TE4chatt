@@ -596,1111 +596,1172 @@
     <div class="event-form-content">
         <button class="modal-close-btn" onclick="closeAddEventModal()">&times;</button>
         <h3>Lägg till ny händelse</h3>
-        <form id="add-event-form" onsubmit="saveCustomEvent(event)">
-            <div class="form-group">
-                <label for="event-title">Titel / Ämne</label>
-                <input type="text" id="event-title" placeholder="t.ex. Projektmöte" required />
+        <form id="eventForm">
+            <div class="mb-3">
+                <label for="eventTitle" class="form-label">Titel</label>
+                <input type="text" class="form-control" id="eventTitle" required>
+            </div>
+            <div class="mb-3">
+                <label for="eventDate" class="form-label">Datum</label>
+                <input type="date" class="form-control" id="eventDate" required>
             </div>
 
-            <div class="form-group">
-                <label for="event-day">Dag</label>
-                <select id="event-day" required>
-                    <option value="1">Måndag</option>
-                    <option value="2">Tisdag</option>
-                    <option value="3">Onsdag</option>
-                    <option value="4">Torsdag</option>
-                    <option value="5">Fredag</option>
-                </select>
-            </div>
-
-            <div class="time-inputs">
-                <div class="form-group">
-                    <label for="event-start">Starttid</label>
-                    <input type="time" id="event-start" required />
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="startTime" class="form-label">Starttid</label>
+                    <input type="time" class="form-control" id="startTime" required>
                 </div>
-                <div class="form-group">
-                    <label for="event-end">Sluttid</label>
-                    <input type="time" id="event-end" required />
+                <div class="col-md-6 mb-3">
+                    <label for="endTime" class="form-label">Sluttid</label>
+                    <input type="time" class="form-control" id="endTime" required>
                 </div>
             </div>
 
-            <button type="submit" class="save-btn">Spara händelse</button>
+            <button type="submit" class="btn btn-primary">Spara händelse</button>
         </form>
     </div>
 </div>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
-        authDomain: "te4chatt.firebaseapp.com",
-        projectId: "te4chatt",
-        storageBucket: "te4chatt.firebasestorage.app",
-        messagingSenderId: "732475626937",
-        appId: "1:732475626937:web:6461273395e350f46e5268",
-        measurementId: "G-Z6R5G1GKWH"
-    };
+<script type="module">
+const firebaseConfig = {
+    apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
+    authDomain: "te4chatt.firebaseapp.com",
+    projectId: "te4chatt",
+    storageBucket: "te4chatt.firebasestorage.app",
+    messagingSenderId: "732475626937",
+    appId: "1:732475626937:web:6461273395e350f46e5268",
+    measurementId: "G-Z6R5G1GKWH"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const messaging = firebase.messaging();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const messaging = firebase.messaging();
 
-    const VAPID_KEY = 'BI2iabzLZjqRoaPsvWtxlwBWD4ZLjTwvoxss0mQRtF9zCp2JhgGOCVv_jLZUmtP8Qm0KJ7dZsJ5rmmgPCVFmjy0'; 
+const VAPID_KEY = 'BI2iabzLZjqRoaPsvWtxlwBWD4ZLjTwvoxss0mQRtF9zCp2JhgGOCVv_jLZUmtP8Qm0KJ7dZsJ5rmmgPCVFmjy0'; 
 
-    let currentUser = null;
-    let authMode = 'login';
-    let activeChat = { id: 'allman', type: 'channel', name: '# allmän', isCustom: false };
-    let selectedImageData = null;
-    let selectedProfileAvatar = null;
-    let unsubscribeMessages = null;
-    let replyingToMessage = null;
-    let editingMessageId = null;
-    let loadedMessages = {};
-    
-    let allUsers = [];
-    let customChannels = {};
-    let editingChannelId = null;
+let currentUser = null;
+let authMode = 'login';
+let activeChat = { id: 'allman', type: 'channel', name: '# allmän', isCustom: false };
+let selectedImageData = null;
+let selectedProfileAvatar = null;
+let unsubscribeMessages = null;
+let replyingToMessage = null;
+let editingMessageId = null;
+let loadedMessages = {};
 
-    let isAppVisible = document.visibilityState === 'visible';
+let allUsers = [];
+let customChannels = {};
+let editingChannelId = null;
 
-    // Kalender-tillstånd med schemat
-    const baseSchedule = [
-        // Måndag
-        { day: 1, title: 'MJUKVARUDESIGN LWA', start: '08:30', end: '09:40' },
-        { day: 1, title: 'MJUKVARUDESIGN JN', start: '09:50', end: '11:00' },
-        { day: 1, title: 'MJUKVARUDESIGN VK', start: '12:05', end: '13:30' },
-        { day: 1, title: 'MJUKVARUDESIGN', start: '13:35', end: '15:30' },
+let isAppVisible = document.visibilityState === 'visible';
 
-        // Tisdag
-        { day: 2, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
-        { day: 2, title: 'MJUKVARUDESIGN VK', start: '09:35', end: '11:00' },
-        { day: 2, title: 'MJUKVARUDESIGN', start: '12:00', end: '12:55' },
-        { day: 2, title: 'MJUKVARUDESIGN LWA', start: '13:00', end: '14:25' },
-        { day: 2, title: 'MJUKVARUDESIGN', start: '14:30', end: '15:30' },
+// Kalender-tillstånd med fast schemabaserat upplägg
+const baseSchedule = [
+    // Måndag (day 1)
+    { day: 1, title: 'MJUKVARUDESIGN LWA', start: '08:30', end: '09:40' },
+    { day: 1, title: 'MJUKVARUDESIGN JN', start: '09:50', end: '11:00' },
+    { day: 1, title: 'MJUKVARUDESIGN VK', start: '12:05', end: '13:30' },
+    { day: 1, title: 'MJUKVARUDESIGN', start: '13:35', end: '15:30' },
 
-        // Onsdag
-        { day: 3, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
-        { day: 3, title: 'MJUKVARUDESIGN LWA', start: '09:40', end: '11:05' },
-        { day: 3, title: 'PLANERINGSTID JN,VK,LWA', start: '11:45', end: '13:10', isPlanering: true },
-        { day: 3, title: 'MJUKVARUDESIGN', start: '13:15', end: '15:30' },
+    // Tisdag (day 2)
+    { day: 2, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
+    { day: 2, title: 'MJUKVARUDESIGN VK', start: '09:35', end: '11:00' },
+    { day: 2, title: 'MJUKVARUDESIGN', start: '12:00', end: '12:55' },
+    { day: 2, title: 'MJUKVARUDESIGN LWA', start: '13:00', end: '14:25' },
+    { day: 2, title: 'MJUKVARUDESIGN', start: '14:30', end: '15:30' },
 
-        // Torsdag
-        { day: 4, title: 'MJUKVARUDESIGN VK', start: '08:30', end: '09:35' },
-        { day: 4, title: 'MJUKVARUDESIGN', start: '09:40', end: '11:05' },
-        { day: 4, title: 'MJUKVARUDESIGN', start: '12:00', end: '13:15' },
-        { day: 4, title: 'MJUKVARUDESIGN JN', start: '13:20', end: '15:30' },
+    // Onsdag (day 3)
+    { day: 3, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
+    { day: 3, title: 'MJUKVARUDESIGN LWA', start: '09:40', end: '11:05' },
+    { day: 3, title: 'PLANERINGSTID JN,VK,LWA', start: '11:45', end: '13:10', isPlanering: true },
+    { day: 3, title: 'MJUKVARUDESIGN', start: '13:15', end: '15:30' },
 
-        // Fredag
-        { day: 5, title: 'MJUKVARUDESIGN LWA,JN', start: '08:30', end: '09:50' },
-        { day: 5, title: 'MJUKVARUDESIGN', start: '12:00', end: '15:30' }
-    ];
+    // Torsdag (day 4)
+    { day: 4, title: 'MJUKVARUDESIGN VK', start: '08:30', end: '09:35' },
+    { day: 4, title: 'MJUKVARUDESIGN', start: '09:40', end: '11:05' },
+    { day: 4, title: 'MJUKVARUDESIGN', start: '12:00', end: '13:15' },
+    { day: 4, title: 'MJUKVARUDESIGN JN', start: '13:20', end: '15:30' },
 
-    let currentWeekOffset = 0;
-    let customEvents = [];
+    // Fredag (day 5)
+    { day: 5, title: 'MJUKVARUDESIGN LWA,JN', start: '08:30', end: '09:50' },
+    { day: 5, title: 'MJUKVARUDESIGN', start: '12:00', end: '15:30' }
+];
 
-    document.addEventListener("visibilitychange", () => {
-        isAppVisible = document.visibilityState === 'visible';
-        if (currentUser) {
-            db.collection('users').doc(currentUser.uid).update({
+let currentWeekOffset = 0;
+let customEvents = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Koppla formulärets submit-event för kalendern
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.addEventListener('submit', saveCustomEvent);
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    isAppVisible = document.visibilityState === 'visible';
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).update({
+            inApp: isAppVisible,
+            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.error("Kunde inte uppdatera inApp-status:", err));
+    }
+});
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const userRef = db.collection('users').doc(user.uid);
+        
+        userRef.get().then(doc => {
+            let name = user.displayName || user.email.split('@')[0];
+            let photoURL = user.photoURL || null;
+            let notificationsEnabled = false;
+
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.name) name = data.name;
+                if (data.photoURL) photoURL = data.photoURL;
+                if (data.notificationsEnabled !== undefined) notificationsEnabled = data.notificationsEnabled;
+            }
+
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                name: name,
+                photoURL: photoURL,
+                initials: getInitials(name),
+                notificationsEnabled: notificationsEnabled
+            };
+
+            document.getElementById('notification-toggle').checked = notificationsEnabled;
+
+            return userRef.set({
+                id: user.uid,
+                name: currentUser.name,
+                email: currentUser.email,
+                photoURL: currentUser.photoURL,
+                initials: currentUser.initials,
+                notificationsEnabled: notificationsEnabled,
+                status: 'online',
                 inApp: isAppVisible,
                 lastActive: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(err => console.error("Kunde inte uppdatera inApp-status:", err));
-        }
-    });
+            }, { merge: true });
+        }).then(() => {
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('user-footer').style.display = 'flex';
+            updateUserFooterUI();
+            startListeners();
+        }).catch(err => {
+            console.error("Firestore fel:", err);
+            showAuthError("Det gick inte att ansluta till databasen.");
+        });
+    } else {
+        currentUser = null;
+        document.getElementById('auth-modal').style.display = 'flex';
+        document.getElementById('user-footer').style.display = 'none';
+    }
+});
 
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            const userRef = db.collection('users').doc(user.uid);
-            
-            userRef.get().then(doc => {
-                let name = user.displayName || user.email.split('@')[0];
-                let photoURL = user.photoURL || null;
-                let notificationsEnabled = false;
+// --- KALENDER LOGIK ---
+function openCalendarModal() {
+    currentWeekOffset = 0;
+    document.getElementById('calendar-modal').style.display = 'flex';
+    loadCalendarEvents();
+}
 
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.name) name = data.name;
-                    if (data.photoURL) photoURL = data.photoURL;
-                    if (data.notificationsEnabled !== undefined) notificationsEnabled = data.notificationsEnabled;
-                }
+function closeCalendarModal() {
+    document.getElementById('calendar-modal').style.display = 'none';
+}
 
-                currentUser = {
-                    uid: user.uid,
-                    email: user.email,
-                    name: name,
-                    photoURL: photoURL,
-                    initials: getInitials(name),
-                    notificationsEnabled: notificationsEnabled
-                };
+function openAddEventModal() {
+    document.getElementById('add-event-modal').style.display = 'flex';
+}
 
-                document.getElementById('notification-toggle').checked = notificationsEnabled;
+function closeAddEventModal() {
+    document.getElementById('add-event-modal').style.display = 'none';
+}
 
-                return userRef.set({
-                    id: user.uid,
-                    name: currentUser.name,
-                    email: currentUser.email,
-                    photoURL: currentUser.photoURL,
-                    initials: currentUser.initials,
-                    notificationsEnabled: notificationsEnabled,
-                    status: 'online',
-                    inApp: isAppVisible,
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            }).then(() => {
-                document.getElementById('auth-modal').style.display = 'none';
-                document.getElementById('user-footer').style.display = 'flex';
-                updateUserFooterUI();
-                startListeners();
-            }).catch(err => {
-                console.error("Firestore fel:", err);
-                showAuthError("Det gick inte att ansluta till databasen.");
+function changeWeek(direction) {
+    currentWeekOffset += direction;
+    renderCalendar();
+}
+
+function loadCalendarEvents() {
+    db.collection('calendar_events').onSnapshot(snapshot => {
+        customEvents = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            customEvents.push({ 
+                id: doc.id, 
+                ...data,
+                // Omvandla Firestore Timestamps till JS Date
+                startDate: data.start ? data.start.toDate() : null,
+                endDate: data.end ? data.end.toDate() : null
             });
-        } else {
-            currentUser = null;
-            document.getElementById('auth-modal').style.display = 'flex';
-            document.getElementById('user-footer').style.display = 'none';
-        }
-    });
-
-    // --- KALENDER LOGIK ---
-    function openCalendarModal() {
-        currentWeekOffset = 0;
-        document.getElementById('calendar-modal').style.display = 'flex';
-        loadCalendarEvents();
-    }
-
-    function closeCalendarModal() {
-        document.getElementById('calendar-modal').style.display = 'none';
-    }
-
-    function openAddEventModal() {
-        document.getElementById('add-event-modal').style.display = 'flex';
-    }
-
-    function closeAddEventModal() {
-        document.getElementById('add-event-modal').style.display = 'none';
-    }
-
-    function changeWeek(direction) {
-        currentWeekOffset += direction;
+        });
         renderCalendar();
+    }, err => {
+        console.error("Kunde inte hämta kalenderhändelser:", err);
+        renderCalendar();
+    });
+}
+
+async function saveCustomEvent(e) {
+    e.preventDefault();
+    if (!currentUser) {
+        alert("Du måste vara inloggad för att spara en händelse.");
+        return;
     }
 
-    function loadCalendarEvents() {
-        db.collection('calendar_events').onSnapshot(snapshot => {
-            customEvents = [];
-            snapshot.forEach(doc => {
-                customEvents.push({ id: doc.id, ...doc.data() });
-            });
-            renderCalendar();
-        }, err => {
-            console.error("Kunde inte hämta kalenderhändelser:", err);
-            renderCalendar();
+    const title = document.getElementById('eventTitle').value.trim();
+    const dateVal = document.getElementById('eventDate').value;
+    const startTimeVal = document.getElementById('startTime').value;
+    const endTimeVal = document.getElementById('endTime').value;
+
+    if (endTimeVal <= startTimeVal) {
+        alert("Sluttiden måste vara efter starttiden!");
+        return;
+    }
+
+    const startDateTime = new Date(`${dateVal}T${startTimeVal}`);
+    const endDateTime = new Date(`${dateVal}T${endTimeVal}`);
+
+    try {
+        await db.collection('calendar_events').add({
+            title: title,
+            dateStr: dateVal, // Format: YYYY-MM-DD
+            start: startDateTime,
+            end: endDateTime,
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+
+        document.getElementById('eventForm').reset();
+        closeAddEventModal();
+    } catch (err) {
+        console.error("Fel vid sparande av händelse: ", err);
+        alert("Det gick inte att spara händelsen. Kontrollera dina rättigheter.");
+    }
+}
+
+function getMonday(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
+
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function formatDateISO(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    const dayNames = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
+
+    const now = new Date();
+    const targetMonday = getMonday(now);
+    targetMonday.setDate(targetMonday.getDate() + (currentWeekOffset * 7));
+
+    const weekNum = getWeekNumber(targetMonday);
+    
+    const headerTitle = document.getElementById('calendar-month-year');
+    if (headerTitle) {
+        const currentTag = currentWeekOffset === 0 ? " (Nu)" : "";
+        headerTitle.innerText = `Vecka ${weekNum}${currentTag}`;
     }
 
-    async function saveCustomEvent(e) {
-        e.preventDefault();
-        const title = document.getElementById('event-title').value.trim();
-        const day = parseInt(document.getElementById('event-day').value);
-        const start = document.getElementById('event-start').value;
-        const end = document.getElementById('event-end').value;
+    dayNames.forEach((name, index) => {
+        const dayNum = index + 1;
+        const dayDate = new Date(targetMonday);
+        dayDate.setDate(targetMonday.getDate() + index);
 
-        try {
-            await db.collection('calendar_events').add({
-                title,
-                day,
-                start,
-                end,
-                createdBy: currentUser ? currentUser.uid : 'Anonym',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            closeAddEventModal();
-            document.getElementById('add-event-form').reset();
-        } catch (err) {
-            console.error("Fel vid sparande av händelse: ", err);
-            alert("Det gick inte att spara händelsen.");
-        }
-    }
+        const formattedDateStr = formatDateISO(dayDate);
+        const dayDisplayStr = `${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
 
-    function getMonday(d) {
-        d = new Date(d);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(d.setDate(diff));
-    }
+        const col = document.createElement('div');
+        col.className = 'day-column';
 
-    function getWeekNumber(d) {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    }
+        const header = document.createElement('div');
+        header.className = 'day-header';
+        header.innerText = `${name} ${dayDisplayStr}`;
+        col.appendChild(header);
 
-    function renderCalendar() {
-        const grid = document.getElementById('calendar-grid');
-        if (!grid) return;
-        
-        grid.innerHTML = '';
-        const dayNames = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
+        const eventsContainer = document.createElement('div');
+        eventsContainer.className = 'day-events';
 
-        const now = new Date();
-        const targetMonday = getMonday(now);
-        targetMonday.setDate(targetMonday.getDate() + (currentWeekOffset * 7));
+        // Filtrera bas-schemat för aktuell veckodag
+        const dayBaseEvents = baseSchedule
+            .filter(e => e.day === dayNum)
+            .map(e => ({ ...e, isBase: true }));
 
-        const weekNum = getWeekNumber(targetMonday);
-        
-        const headerTitle = document.getElementById('calendar-month-year');
-        if (headerTitle) {
-            const currentTag = currentWeekOffset === 0 ? " (Nu)" : "";
-            headerTitle.innerText = `Vecka ${weekNum}${currentTag}`;
-        }
+        // Filtrera Firestore-händelser baserat på exakt datum
+        const dayCustomEvents = customEvents
+            .filter(e => {
+                if (e.dateStr) return e.dateStr === formattedDateStr;
+                if (e.startDate) return formatDateISO(e.startDate) === formattedDateStr;
+                return false;
+            })
+            .map(e => {
+                let startText = e.start;
+                let endText = e.end;
 
-        dayNames.forEach((name, index) => {
-            const dayNum = index + 1;
-            const dayDate = new Date(targetMonday);
-            dayDate.setDate(targetMonday.getDate() + index);
-
-            const dayStr = `${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
-
-            const col = document.createElement('div');
-            col.className = 'day-column';
-
-            const header = document.createElement('div');
-            header.className = 'day-header';
-            header.innerText = `${name} ${dayStr}`;
-            col.appendChild(header);
-
-            const eventsContainer = document.createElement('div');
-            eventsContainer.className = 'day-events';
-
-            const dayEvents = [
-                ...baseSchedule.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: true })),
-                ...customEvents.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: false }))
-            ].sort((a, b) => a.start.localeCompare(b.start));
-
-            const groups = groupOverlappingEvents(dayEvents);
-
-            groups.forEach(group => {
-                if (group.length > 1) {
-                    const splitRow = document.createElement('div');
-                    splitRow.className = 'event-row-split';
-                    group.forEach(ev => splitRow.appendChild(createEventElement(ev)));
-                    eventsContainer.appendChild(splitRow);
-                } else if (group.length === 1) {
-                    eventsContainer.appendChild(createEventElement(group[0]));
+                if (e.startDate) {
+                    startText = e.startDate.getHours().toString().padStart(2, '0') + ':' + 
+                                e.startDate.getMinutes().toString().padStart(2, '0');
                 }
+                if (e.endDate) {
+                    endText = e.endDate.getHours().toString().padStart(2, '0') + ':' + 
+                              e.endDate.getMinutes().toString().padStart(2, '0');
+                }
+
+                return {
+                    ...e,
+                    start: startText,
+                    end: endText,
+                    isBase: false
+                };
             });
 
-            col.appendChild(eventsContainer);
-            grid.appendChild(col);
-        });
-    }
+        const dayEvents = [...dayBaseEvents, ...dayCustomEvents].sort((a, b) => a.start.localeCompare(b.start));
 
-    function createEventElement(ev) {
-        const el = document.createElement('div');
-        let extraClass = '';
-        if (ev.isPlanering) extraClass = 'planering';
-        if (!ev.isBase) extraClass = 'custom';
+        const groups = groupOverlappingEvents(dayEvents);
 
-        el.className = `calendar-event ${extraClass}`;
-        el.innerHTML = `<strong>${escapeHtml(ev.title)}</strong><br/><small>${ev.start} - ${ev.end}</small>`;
-        return el;
-    }
-
-    function groupOverlappingEvents(events) {
-        const groups = [];
-        events.forEach(event => {
-            let added = false;
-            for (let group of groups) {
-                if (group.some(e => checkOverlap(e, event))) {
-                    group.push(event);
-                    added = true;
-                    break;
-                }
-            }
-            if (!added) {
-                groups.push([event]);
+        groups.forEach(group => {
+            if (group.length > 1) {
+                const splitRow = document.createElement('div');
+                splitRow.className = 'event-row-split';
+                group.forEach(ev => splitRow.appendChild(createEventElement(ev)));
+                eventsContainer.appendChild(splitRow);
+            } else if (group.length === 1) {
+                eventsContainer.appendChild(createEventElement(group[0]));
             }
         });
-        return groups;
-    }
 
-    function checkOverlap(e1, e2) {
-        return e1.start < e2.end && e2.start < e1.end;
-    }
+        col.appendChild(eventsContainer);
+        grid.appendChild(col);
+    });
+}
 
-    // --- CHATT & PROFIL LOGIK ---
-    function openImageModal(src) {
-        document.getElementById('image-modal-src').src = src;
-        document.getElementById('image-modal').style.display = 'flex';
-    }
+function createEventElement(ev) {
+    const el = document.createElement('div');
+    let extraClass = '';
+    if (ev.isPlanering) extraClass = 'planering';
+    if (!ev.isBase) extraClass = 'custom';
 
-    function closeImageModal() {
-        document.getElementById('image-modal').style.display = 'none';
-    }
+    el.className = `calendar-event ${extraClass}`;
+    el.innerHTML = `<strong>${escapeHtml(ev.title)}</strong><br/><small>${ev.start} - ${ev.end}</small>`;
+    return el;
+}
 
-    function toggleNotifications(enabled) {
-        if (!currentUser) return;
-
-        if (enabled) {
-            if (!("Notification" in window)) {
-                alert("Din webbläsare stöder inte aviseringar.");
-                document.getElementById('notification-toggle').checked = false;
-                return;
+function groupOverlappingEvents(events) {
+    const groups = [];
+    events.forEach(event => {
+        let added = false;
+        for (let group of groups) {
+            if (group.some(e => checkOverlap(e, event))) {
+                group.push(event);
+                added = true;
+                break;
             }
-
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    saveNotificationPreference(true);
-                } else {
-                    alert("Aviseringar nekades i webbläsarens/enhetens inställningar.");
-                    document.getElementById('notification-toggle').checked = false;
-                    saveNotificationPreference(false);
-                }
-            });
-        } else {
-            saveNotificationPreference(false);
         }
-    }
-
-    async function saveNotificationPreference(enabled) {
-        if (!currentUser) return;
-        currentUser.notificationsEnabled = enabled;
-
-        if (enabled) {
-            try {
-                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-
-                const currentToken = await messaging.getToken({
-                    vapidKey: VAPID_KEY,
-                    serviceWorkerRegistration: registration
-                });
-
-                if (currentToken) {
-                    await db.collection('users').doc(currentUser.uid).update({
-                        notificationsEnabled: true,
-                        fcmToken: currentToken
-                    });
-                    alert("Aviseringar aktiverade!");
-                } else {
-                    alert('Ingen token kunde skapas. Kontrollera behörigheter.');
-                }
-            } catch (err) {
-                console.error('Kunde inte hämta FCM Token:', err);
-                alert('Fel vid aktivering av aviseringar: ' + err.message);
-            }
-        } else {
-            db.collection('users').doc(currentUser.uid).update({
-                notificationsEnabled: false
-            });
+        if (!added) {
+            groups.push([event]);
         }
-    }
+    });
+    return groups;
+}
 
-    function updateUserFooterUI() {
-        if (!currentUser) return;
-        document.getElementById('user-footer-name').innerText = currentUser.name;
-        document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
-    }
+function checkOverlap(e1, e2) {
+    return e1.start < e2.end && e2.start < e1.end;
+}
 
-    function setAuthMode(mode) {
-        authMode = mode;
-        document.getElementById('auth-error').style.display = 'none';
-        if (mode === 'login') {
-            document.getElementById('tab-login').classList.add('active');
-            document.getElementById('tab-register').classList.remove('active');
-            document.getElementById('auth-username').style.display = 'none';
-            document.getElementById('auth-subtitle').innerText = 'Logga in för att komma åt portalen';
-            document.getElementById('btn-auth-submit').innerText = 'Logga in';
-        } else {
-            document.getElementById('tab-register').classList.add('active');
-            document.getElementById('tab-login').classList.remove('active');
-            document.getElementById('auth-username').style.display = 'block';
-            document.getElementById('auth-subtitle').innerText = 'Skapa ett nytt konto i TE4 chatt';
-            document.getElementById('btn-auth-submit').innerText = 'Skapa konto';
-        }
-    }
+function openImageModal(src) {
+    document.getElementById('image-modal-src').src = src;
+    document.getElementById('image-modal').style.display = 'flex';
+}
 
-    function handleAuthSubmit() {
-        const email = document.getElementById('auth-email').value.trim();
-        const password = document.getElementById('auth-password').value;
-        const username = document.getElementById('auth-username').value.trim();
-        const btn = document.getElementById('btn-auth-submit');
+function closeImageModal() {
+    document.getElementById('image-modal').style.display = 'none';
+}
 
-        document.getElementById('auth-error').style.display = 'none';
+function toggleNotifications(enabled) {
+    if (!currentUser) return;
 
-        if (!email || !password) {
-            showAuthError('Vänligen fyll i både e-post och lösenord.');
+    if (enabled) {
+        if (!("Notification" in window)) {
+            alert("Din webbläsare stöder inte aviseringar.");
+            document.getElementById('notification-toggle').checked = false;
             return;
         }
 
-        btn.disabled = true;
-        btn.innerText = 'Bearbetar...';
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                saveNotificationPreference(true);
+            } else {
+                alert("Aviseringar nekades i webbläsarens/enhetens inställningar.");
+                document.getElementById('notification-toggle').checked = false;
+                saveNotificationPreference(false);
+            }
+        });
+    } else {
+        saveNotificationPreference(false);
+    }
+}
 
-        if (authMode === 'register') {
-            if (!username) {
-                showAuthError('Vänligen ange ett användarnamn.');
+async function saveNotificationPreference(enabled) {
+    if (!currentUser) return;
+    currentUser.notificationsEnabled = enabled;
+
+    if (enabled) {
+        try {
+            const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+
+            const currentToken = await messaging.getToken({
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: registration
+            });
+
+            if (currentToken) {
+                await db.collection('users').doc(currentUser.uid).update({
+                    notificationsEnabled: true,
+                    fcmToken: currentToken
+                });
+                alert("Aviseringar aktiverade!");
+            } else {
+                alert('Ingen token kunde skapas. Kontrollera behörigheter.');
+            }
+        } catch (err) {
+            console.error('Kunde inte hämta FCM Token:', err);
+            alert('Fel vid aktivering av aviseringar: ' + err.message);
+        }
+    } else {
+        db.collection('users').doc(currentUser.uid).update({
+            notificationsEnabled: false
+        });
+    }
+}
+
+function updateUserFooterUI() {
+    if (!currentUser) return;
+    document.getElementById('user-footer-name').innerText = currentUser.name;
+    document.getElementById('user-footer-avatar').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    document.getElementById('auth-error').style.display = 'none';
+    if (mode === 'login') {
+        document.getElementById('tab-login').classList.add('active');
+        document.getElementById('tab-register').classList.remove('active');
+        document.getElementById('auth-username').style.display = 'none';
+        document.getElementById('auth-subtitle').innerText = 'Logga in för att komma åt portalen';
+        document.getElementById('btn-auth-submit').innerText = 'Logga in';
+    } else {
+        document.getElementById('tab-register').classList.add('active');
+        document.getElementById('tab-login').classList.remove('active');
+        document.getElementById('auth-username').style.display = 'block';
+        document.getElementById('auth-subtitle').innerText = 'Skapa ett nytt konto i TE4 chatt';
+        document.getElementById('btn-auth-submit').innerText = 'Skapa konto';
+    }
+}
+
+function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const username = document.getElementById('auth-username').value.trim();
+    const btn = document.getElementById('btn-auth-submit');
+
+    document.getElementById('auth-error').style.display = 'none';
+
+    if (!email || !password) {
+        showAuthError('Vänligen fyll i både e-post och lösenord.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = 'Bearbetar...';
+
+    if (authMode === 'register') {
+        if (!username) {
+            showAuthError('Vänligen ange ett användarnamn.');
+            btn.disabled = false;
+            btn.innerText = 'Skapa konto';
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .then(userCredential => {
+                return userCredential.user.updateProfile({ displayName: username });
+            })
+            .catch(err => {
                 btn.disabled = false;
                 btn.innerText = 'Skapa konto';
+                showAuthError(translateFirebaseError(err));
+            });
+    } else {
+        auth.signInWithEmailAndPassword(email, password)
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerText = 'Logga in';
+                showAuthError(translateFirebaseError(err));
+            });
+    }
+}
+
+function showAuthError(msg) {
+    const errDiv = document.getElementById('auth-error');
+    errDiv.innerText = msg;
+    errDiv.style.display = 'block';
+}
+
+function translateFirebaseError(err) {
+    switch (err.code) {
+        case 'auth/email-already-in-use': return 'E-postadressen används redan. Välj "Logga in" istället.';
+        case 'auth/invalid-email': return 'Ogiltig e-postadress.';
+        case 'auth/weak-password': return 'Lösenordet måste vara minst 6 tecken.';
+        case 'auth/wrong-password': case 'auth/user-not-found': case 'auth/invalid-credential':
+            return 'Felaktig e-postadress eller lösenord.';
+        default: return err.message;
+    }
+}
+
+function handleLogout() {
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
+    }
+    auth.signOut();
+}
+
+function openProfileModal() {
+    if (!currentUser) return;
+    document.getElementById('profile-name-input').value = currentUser.name;
+    document.getElementById('profile-avatar-display').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
+    selectedProfileAvatar = currentUser.photoURL;
+    document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profile-modal').style.display = 'none';
+}
+
+function handleProfileAvatarSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        resizeImage(file, 200, 200, 0.8, base64Img => {
+            selectedProfileAvatar = base64Img;
+            document.getElementById('profile-avatar-display').innerHTML = `<img src="${base64Img}" />`;
+        });
+    }
+}
+
+function saveProfile() {
+    const newName = document.getElementById('profile-name-input').value.trim();
+    if (!newName) return;
+
+    const newInitials = getInitials(newName);
+    
+    currentUser.name = newName;
+    currentUser.photoURL = selectedProfileAvatar;
+    currentUser.initials = newInitials;
+
+    auth.currentUser.updateProfile({
+        displayName: newName,
+        photoURL: selectedProfileAvatar
+    });
+
+    db.collection('users').doc(currentUser.uid).update({
+        name: newName,
+        photoURL: selectedProfileAvatar,
+        initials: newInitials
+    }).then(() => {
+        updateUserFooterUI();
+        closeProfileModal();
+        loadMessages();
+    });
+}
+
+function openChannelModal(channelId = null) {
+    editingChannelId = channelId;
+    const titleEl = document.getElementById('channel-modal-title');
+    const subtitleEl = document.getElementById('channel-modal-subtitle');
+    const nameInput = document.getElementById('channel-name-input');
+    const membersContainer = document.getElementById('channel-members-selection');
+
+    membersContainer.innerHTML = '';
+    let existingMembers = [currentUser.uid];
+
+    if (channelId && customChannels[channelId]) {
+        titleEl.innerText = 'Redigera Kanal';
+        subtitleEl.innerText = 'Uppdatera kanalens namn eller bjuda in fler kollegor.';
+        nameInput.value = customChannels[channelId].name;
+        existingMembers = customChannels[channelId].members || [currentUser.uid];
+    } else {
+        titleEl.innerText = 'Skapa Ny Kanal';
+        subtitleEl.innerText = 'Namnge kanalen och välj vilka kollegor du vill bjuda in.';
+        nameInput.value = '';
+    }
+
+    allUsers.forEach(u => {
+        if (u.id === currentUser.uid) return;
+        const isChecked = existingMembers.includes(u.id);
+
+        const label = document.createElement('label');
+        label.className = 'member-checkbox-item';
+        label.innerHTML = `
+            <input type="checkbox" value="${u.id}" ${isChecked ? 'checked' : ''}>
+            <span style="font-size: 0.9rem; color: white;">${escapeHtml(u.name)}</span>
+        `;
+        membersContainer.appendChild(label);
+    });
+
+    if (membersContainer.children.length === 0) {
+        membersContainer.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; padding: 6px;">Inga andra användare registrerade ännu.</div>';
+    }
+
+    document.getElementById('channel-modal').style.display = 'flex';
+}
+
+function closeChannelModal() {
+    document.getElementById('channel-modal').style.display = 'none';
+    editingChannelId = null;
+}
+
+function saveChannel() {
+    const nameInput = document.getElementById('channel-name-input');
+    const name = nameInput.value.trim().toLowerCase().replace(/\s+/g, '-');
+
+    if (!name) {
+        alert('Vänligen ange ett kanalnamn.');
+        return;
+    }
+
+    const checkedBoxes = document.querySelectorAll('#channel-members-selection input[type="checkbox"]:checked');
+    const selectedMemberIds = [currentUser.uid];
+    checkedBoxes.forEach(box => selectedMemberIds.push(box.value));
+
+    if (editingChannelId) {
+        db.collection('channels').doc(editingChannelId).update({
+            name: name,
+            members: selectedMemberIds
+        }).then(() => {
+            if (activeChat.id === editingChannelId) {
+                selectChannel(editingChannelId, `# ${name}`, true);
+            }
+            closeChannelModal();
+        });
+    } else {
+        db.collection('channels').add({
+            name: name,
+            createdBy: currentUser.uid,
+            members: selectedMemberIds,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(docRef => {
+            closeChannelModal();
+            selectChannel(docRef.id, `# ${name}`, true);
+        });
+    }
+}
+
+function startListeners() {
+    db.collection('users').onSnapshot(snapshot => {
+        allUsers = [];
+        const dmList = document.getElementById('dm-list');
+        const onlineList = document.getElementById('users-online-list');
+        dmList.innerHTML = '';
+        onlineList.innerHTML = '';
+
+        snapshot.forEach(doc => {
+            const u = doc.data();
+            allUsers.push(u);
+
+            if (u.id === currentUser.uid) return;
+
+            const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
+
+            const dmItem = document.createElement('li');
+            dmItem.className = `item-link ${activeChat.id === getDmChatId(u.id) ? 'active' : ''}`;
+            dmItem.onclick = () => selectDm(u);
+            dmItem.innerHTML = `<span class="status-dot"></span> ${escapeHtml(u.name)}`;
+            dmList.appendChild(dmItem);
+
+            const userCard = document.createElement('div');
+            userCard.className = 'user-card';
+            userCard.onclick = () => selectDm(u);
+            userCard.innerHTML = `
+                <div class="avatar-small">${avatarHtml}</div>
+                <div class="user-info">
+                    <div class="name">${escapeHtml(u.name)}</div>
+                    <div class="role">Medlem</div>
+                </div>
+            `;
+            onlineList.appendChild(userCard);
+        });
+
+        if (dmList.children.length === 0) {
+            dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare ännu</li>';
+        }
+    });
+
+    db.collection('channels')
+    .where('members', 'array-contains', currentUser.uid)
+    .onSnapshot(snapshot => {
+        const channelsList = document.getElementById('channels-list');
+        channelsList.innerHTML = `
+            <li class="item-link ${activeChat.id === 'allman' ? 'active' : ''}" id="channel-allman" onclick="selectChannel('allman', '# allmän', false)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                allmän
+            </li>
+        `;
+        customChannels = {};
+
+        snapshot.forEach(doc => {
+            const ch = { id: doc.id, ...doc.data() };
+            customChannels[ch.id] = ch;
+
+            const isMember = ch.members && ch.members.includes(currentUser.uid);
+            if (isMember) {
+                const li = document.createElement('li');
+                li.className = `item-link ${activeChat.id === ch.id ? 'active' : ''}`;
+                li.onclick = () => selectChannel(ch.id, `# ${ch.name}`, true);
+                li.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                    ${escapeHtml(ch.name)}
+                `;
+                channelsList.appendChild(li);
+            }
+        });
+    });
+
+    loadMessages();
+}
+
+function getDmChatId(targetUserId) {
+    return [currentUser.uid, targetUserId].sort().join('_');
+}
+
+function selectChannel(id, name, isCustom = false) {
+    activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
+    document.getElementById('current-chat-title').innerText = name;
+    
+    const editBtn = document.getElementById('btn-edit-channel');
+    if (isCustom) {
+        editBtn.style.display = 'inline-flex';
+    } else {
+        editBtn.style.display = 'none';
+    }
+
+    document.getElementById('messages-container').innerHTML = '';
+    updateActiveUI();
+    clearReplyOrEdit();
+    loadMessages();
+    closeSidebars();
+}
+
+function selectDm(user) {
+    const chatId = getDmChatId(user.id);
+    activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
+    document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
+    document.getElementById('btn-edit-channel').style.display = 'none';
+    
+    document.getElementById('messages-container').innerHTML = '';
+    updateActiveUI();
+    clearReplyOrEdit();
+    loadMessages();
+    closeSidebars();
+}
+
+function updateActiveUI() {
+    document.querySelectorAll('.item-link').forEach(el => el.classList.remove('active'));
+    if (activeChat.type === 'channel') {
+        const activeEl = document.getElementById(`channel-${activeChat.id}`);
+        if (activeEl) activeEl.classList.add('active');
+    }
+}
+
+function toggleSidebar(side) {
+    const overlay = document.getElementById('mobile-overlay');
+    const sidebar = document.getElementById(side === 'left' ? 'sidebar-left' : 'sidebar-right');
+    
+    if (sidebar.classList.contains('open')) {
+        closeSidebars();
+    } else {
+        closeSidebars();
+        sidebar.classList.add('open');
+        overlay.style.display = 'block';
+    }
+}
+
+function closeSidebars() {
+    document.getElementById('sidebar-left').classList.remove('open');
+    document.getElementById('sidebar-right').classList.remove('open');
+    document.getElementById('mobile-overlay').style.display = 'none';
+}
+
+function loadMessages() {
+    if (unsubscribeMessages) unsubscribeMessages();
+    const container = document.getElementById('messages-container');
+    loadedMessages = {};
+
+    unsubscribeMessages = db.collection('messages')
+        .where('chatId', '==', activeChat.id)
+        .onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
                 return;
             }
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    return userCredential.user.updateProfile({ displayName: username });
-                })
-                .catch(err => {
-                    btn.disabled = false;
-                    btn.innerText = 'Skapa konto';
-                    showAuthError(translateFirebaseError(err));
-                });
-        } else {
-            auth.signInWithEmailAndPassword(email, password)
-                .catch(err => {
-                    btn.disabled = false;
-                    btn.innerText = 'Logga in';
-                    showAuthError(translateFirebaseError(err));
-                });
-        }
-    }
+            if (!container.querySelector('.message')) {
+                container.innerHTML = '';
+            }
 
-    function showAuthError(msg) {
-        const errDiv = document.getElementById('auth-error');
-        errDiv.innerText = msg;
-        errDiv.style.display = 'block';
-    }
-
-    function translateFirebaseError(err) {
-        switch (err.code) {
-            case 'auth/email-already-in-use': return 'E-postadressen används redan. Välj "Logga in" istället.';
-            case 'auth/invalid-email': return 'Ogiltig e-postadress.';
-            case 'auth/weak-password': return 'Lösenordet måste vara minst 6 tecken.';
-            case 'auth/wrong-password': case 'auth/user-not-found': case 'auth/invalid-credential':
-                return 'Felaktig e-postadress eller lösenord.';
-            default: return err.message;
-        }
-    }
-
-    function handleLogout() {
-        if (currentUser) {
-            db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
-        }
-        auth.signOut();
-    }
-
-    function openProfileModal() {
-        if (!currentUser) return;
-        document.getElementById('profile-name-input').value = currentUser.name;
-        document.getElementById('profile-avatar-display').innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
-        selectedProfileAvatar = currentUser.photoURL;
-        document.getElementById('profile-modal').style.display = 'flex';
-    }
-
-    function closeProfileModal() {
-        document.getElementById('profile-modal').style.display = 'none';
-    }
-
-    function handleProfileAvatarSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            resizeImage(file, 200, 200, 0.8, base64Img => {
-                selectedProfileAvatar = base64Img;
-                document.getElementById('profile-avatar-display').innerHTML = `<img src="${base64Img}" />`;
-            });
-        }
-    }
-
-    function saveProfile() {
-        const newName = document.getElementById('profile-name-input').value.trim();
-        if (!newName) return;
-
-        const newInitials = getInitials(newName);
-        
-        currentUser.name = newName;
-        currentUser.photoURL = selectedProfileAvatar;
-        currentUser.initials = newInitials;
-
-        auth.currentUser.updateProfile({
-            displayName: newName,
-            photoURL: selectedProfileAvatar
-        });
-
-        db.collection('users').doc(currentUser.uid).update({
-            name: newName,
-            photoURL: selectedProfileAvatar,
-            initials: newInitials
-        }).then(() => {
-            updateUserFooterUI();
-            closeProfileModal();
-            loadMessages();
-        });
-    }
-
-    function openChannelModal(channelId = null) {
-        editingChannelId = channelId;
-        const titleEl = document.getElementById('channel-modal-title');
-        const subtitleEl = document.getElementById('channel-modal-subtitle');
-        const nameInput = document.getElementById('channel-name-input');
-        const membersContainer = document.getElementById('channel-members-selection');
-
-        membersContainer.innerHTML = '';
-        let existingMembers = [currentUser.uid];
-
-        if (channelId && customChannels[channelId]) {
-            titleEl.innerText = 'Redigera Kanal';
-            subtitleEl.innerText = 'Uppdatera kanalens namn eller bjuda in fler kollegor.';
-            nameInput.value = customChannels[channelId].name;
-            existingMembers = customChannels[channelId].members || [currentUser.uid];
-        } else {
-            titleEl.innerText = 'Skapa Ny Kanal';
-            subtitleEl.innerText = 'Namnge kanalen och välj vilka kollegor du vill bjuda in.';
-            nameInput.value = '';
-        }
-
-        allUsers.forEach(u => {
-            if (u.id === currentUser.uid) return;
-            const isChecked = existingMembers.includes(u.id);
-
-            const label = document.createElement('label');
-            label.className = 'member-checkbox-item';
-            label.innerHTML = `
-                <input type="checkbox" value="${u.id}" ${isChecked ? 'checked' : ''}>
-                <span style="font-size: 0.9rem; color: white;">${escapeHtml(u.name)}</span>
-            `;
-            membersContainer.appendChild(label);
-        });
-
-        if (membersContainer.children.length === 0) {
-            membersContainer.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; padding: 6px;">Inga andra användare registrerade ännu.</div>';
-        }
-
-        document.getElementById('channel-modal').style.display = 'flex';
-    }
-
-    function closeChannelModal() {
-        document.getElementById('channel-modal').style.display = 'none';
-        editingChannelId = null;
-    }
-
-    function saveChannel() {
-        const nameInput = document.getElementById('channel-name-input');
-        const name = nameInput.value.trim().toLowerCase().replace(/\s+/g, '-');
-
-        if (!name) {
-            alert('Vänligen ange ett kanalnamn.');
-            return;
-        }
-
-        const checkedBoxes = document.querySelectorAll('#channel-members-selection input[type="checkbox"]:checked');
-        const selectedMemberIds = [currentUser.uid];
-        checkedBoxes.forEach(box => selectedMemberIds.push(box.value));
-
-        if (editingChannelId) {
-            db.collection('channels').doc(editingChannelId).update({
-                name: name,
-                members: selectedMemberIds
-            }).then(() => {
-                if (activeChat.id === editingChannelId) {
-                    selectChannel(editingChannelId, `# ${name}`, true);
-                }
-                closeChannelModal();
-            });
-        } else {
-            db.collection('channels').add({
-                name: name,
-                createdBy: currentUser.uid,
-                members: selectedMemberIds,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(docRef => {
-                closeChannelModal();
-                selectChannel(docRef.id, `# ${name}`, true);
-            });
-        }
-    }
-
-    function startListeners() {
-        db.collection('users').onSnapshot(snapshot => {
-            allUsers = [];
-            const dmList = document.getElementById('dm-list');
-            const onlineList = document.getElementById('users-online-list');
-            dmList.innerHTML = '';
-            onlineList.innerHTML = '';
-
+            const msgs = [];
             snapshot.forEach(doc => {
-                const u = doc.data();
-                allUsers.push(u);
-
-                if (u.id === currentUser.uid) return;
-
-                const avatarHtml = renderAvatarContent(u.photoURL, u.initials || getInitials(u.name));
-
-                const dmItem = document.createElement('li');
-                dmItem.className = `item-link ${activeChat.id === getDmChatId(u.id) ? 'active' : ''}`;
-                dmItem.onclick = () => selectDm(u);
-                dmItem.innerHTML = `<span class="status-dot"></span> ${escapeHtml(u.name)}`;
-                dmList.appendChild(dmItem);
-
-                const userCard = document.createElement('div');
-                userCard.className = 'user-card';
-                userCard.onclick = () => selectDm(u);
-                userCard.innerHTML = `
-                    <div class="avatar-small">${avatarHtml}</div>
-                    <div class="user-info">
-                        <div class="name">${escapeHtml(u.name)}</div>
-                        <div class="role">Medlem</div>
-                    </div>
-                `;
-                onlineList.appendChild(userCard);
+                const msgData = { id: doc.id, ...doc.data() };
+                msgs.push(msgData);
+                loadedMessages[doc.id] = msgData;
             });
 
-            if (dmList.children.length === 0) {
-                dmList.innerHTML = '<li style="padding: 10px; color: var(--text-dim); font-size: 0.8rem;">Inga andra användare ännu</li>';
+            msgs.sort((a, b) => {
+                const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
+                const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                return tA - tB;
+            });
+
+            const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+            msgs.forEach(msg => {
+                const existingEl = document.getElementById(`msg-${msg.id}`);
+                if (existingEl) {
+                    updateReactionsUI(msg);
+                } else {
+                    renderMessage(msg);
+                }
+            });
+
+            if (isScrolledToBottom) {
+                container.scrollTop = container.scrollHeight;
             }
         });
+}
 
-        db.collection('channels')
-        .where('members', 'array-contains', currentUser.uid)
-        .onSnapshot(snapshot => {
-            const channelsList = document.getElementById('channels-list');
-            channelsList.innerHTML = `
-                <li class="item-link ${activeChat.id === 'allman' ? 'active' : ''}" id="channel-allman" onclick="selectChannel('allman', '# allmän', false)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-                    allmän
-                </li>
-            `;
-            customChannels = {};
+function updateReactionsUI(msg) {
+    const msgEl = document.getElementById(`msg-${msg.id}`);
+    if (!msgEl) return;
 
-            snapshot.forEach(doc => {
-                const ch = { id: doc.id, ...doc.data() };
-                customChannels[ch.id] = ch;
-
-                const isMember = ch.members && ch.members.includes(currentUser.uid);
-                if (isMember) {
-                    const li = document.createElement('li');
-                    li.className = `item-link ${activeChat.id === ch.id ? 'active' : ''}`;
-                    li.onclick = () => selectChannel(ch.id, `# ${ch.name}`, true);
-                    li.innerHTML = `
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-                        ${escapeHtml(ch.name)}
-                    `;
-                    channelsList.appendChild(li);
-                }
-            });
+    let activeBadgesHtml = '';
+    if (msg.reactions) {
+        const emojis = ['❤️', '👍', '😂'];
+        emojis.forEach(emoji => {
+            const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+            if (users.length > 0) {
+                const hasReacted = currentUser && users.includes(currentUser.uid);
+                activeBadgesHtml += `
+                    <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
+                        <span>${emoji}</span>
+                        <span class="reaction-count">${users.length}</span>
+                    </div>
+                `;
+            }
         });
-
-        loadMessages();
     }
 
-    function getDmChatId(targetUserId) {
-        return [currentUser.uid, targetUserId].sort().join('_');
+    const footerActions = msgEl.querySelector('.message-footer-actions');
+    if (footerActions) {
+        footerActions.innerHTML = `
+            <div class="reaction-picker">
+                <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                <button class="emoji-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                <button class="emoji-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+            </div>
+            ${activeBadgesHtml ? `<div class="reactions-container">${activeBadgesHtml}</div>` : ''}
+        `;
     }
 
-    function selectChannel(id, name, isCustom = false) {
-        activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
-        document.getElementById('current-chat-title').innerText = name;
-        
-        const editBtn = document.getElementById('btn-edit-channel');
-        if (isCustom) {
-            editBtn.style.display = 'inline-flex';
-        } else {
-            editBtn.style.display = 'none';
-        }
+    const textEl = msgEl.querySelector('.message-text');
+    if (textEl && msg.text) {
+        textEl.innerText = msg.text;
+    }
+}
 
-        document.getElementById('messages-container').innerHTML = '';
-        updateActiveUI();
-        clearReplyOrEdit();
-        loadMessages();
-        closeSidebars();
+function renderMessage(msg) {
+    const container = document.getElementById('messages-container');
+    const isSelf = currentUser && msg.senderId === currentUser.uid;
+    
+    const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
+    const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+
+    const avatarHtml = renderAvatarContent(msg.senderPhoto, msg.senderInitials || getInitials(msg.senderName));
+
+    let replyHtml = '';
+    if (msg.replyTo) {
+        replyHtml = `
+            <div class="reply-quote">
+                <div class="reply-quote-name">${escapeHtml(msg.replyTo.senderName)}</div>
+                <div class="reply-quote-text">${escapeHtml(msg.replyTo.text || '[Bild]')}</div>
+            </div>
+        `;
     }
 
-    function selectDm(user) {
-        const chatId = getDmChatId(user.id);
-        activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
-        document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
-        document.getElementById('btn-edit-channel').style.display = 'none';
-        
-        document.getElementById('messages-container').innerHTML = '';
-        updateActiveUI();
-        clearReplyOrEdit();
-        loadMessages();
-        closeSidebars();
+    let activeBadgesHtml = '';
+    if (msg.reactions) {
+        const emojis = ['❤️', '👍', '😂'];
+        emojis.forEach(emoji => {
+            const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+            if (users.length > 0) {
+                const hasReacted = currentUser && users.includes(currentUser.uid);
+                activeBadgesHtml += `
+                    <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
+                        <span>${emoji}</span>
+                        <span class="reaction-count">${users.length}</span>
+                    </div>
+                `;
+            }
+        });
     }
 
-    function updateActiveUI() {
-        document.querySelectorAll('.item-link').forEach(el => el.classList.remove('active'));
-        if (activeChat.type === 'channel') {
-            const activeEl = document.getElementById(`channel-${activeChat.id}`);
-            if (activeEl) activeEl.classList.add('active');
-        }
-    }
+    const msgDiv = document.createElement('div');
+    msgDiv.id = `msg-${msg.id}`;
+    msgDiv.className = `message ${isSelf ? 'self' : ''}`;
+    
+    msgDiv.innerHTML = `
+        <div class="avatar-box" style="flex-shrink:0;">${avatarHtml}</div>
+        <div class="message-content-wrapper">
+            <div class="message-bubble">
+                <div class="message-header">
+                    <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
+                    <span class="timestamp">${timeStr}</span>
+                    ${msg.isEdited ? `<span class="edited-tag">(redigerad)</span>` : ''}
+                    <div class="message-actions">
+                        <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                        </button>
+                        ${isSelf ? `
+                        <button class="msg-action-btn" title="Redigera" onclick="prepareEdit('${msg.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+                ${replyHtml}
+                ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
+                ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openImageModal('${msg.image}')" />` : ''}
+            </div>
 
-    function toggleSidebar(side) {
-        const overlay = document.getElementById('mobile-overlay');
-        const sidebar = document.getElementById(side === 'left' ? 'sidebar-left' : 'sidebar-right');
-        
-        if (sidebar.classList.contains('open')) {
-            closeSidebars();
-        } else {
-            closeSidebars();
-            sidebar.classList.add('open');
-            overlay.style.display = 'block';
-        }
-    }
-
-    function closeSidebars() {
-        document.getElementById('sidebar-left').classList.remove('open');
-        document.getElementById('sidebar-right').classList.remove('open');
-        document.getElementById('mobile-overlay').style.display = 'none';
-    }
-
-    function loadMessages() {
-        if (unsubscribeMessages) unsubscribeMessages();
-        const container = document.getElementById('messages-container');
-        loadedMessages = {};
-
-        unsubscribeMessages = db.collection('messages')
-            .where('chatId', '==', activeChat.id)
-            .onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
-                    return;
-                }
-
-                if (!container.querySelector('.message')) {
-                    container.innerHTML = '';
-                }
-
-                const msgs = [];
-                snapshot.forEach(doc => {
-                    const msgData = { id: doc.id, ...doc.data() };
-                    msgs.push(msgData);
-                    loadedMessages[doc.id] = msgData;
-                });
-
-                msgs.sort((a, b) => {
-                    const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-                    const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
-                    return tA - tB;
-                });
-
-                const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-
-                msgs.forEach(msg => {
-                    const existingEl = document.getElementById(`msg-${msg.id}`);
-                    if (existingEl) {
-                        updateReactionsUI(msg);
-                    } else {
-                        renderMessage(msg);
-                    }
-                });
-
-                if (isScrolledToBottom) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            });
-    }
-
-    function updateReactionsUI(msg) {
-        const msgEl = document.getElementById(`msg-${msg.id}`);
-        if (!msgEl) return;
-
-        let activeBadgesHtml = '';
-        if (msg.reactions) {
-            const emojis = ['❤️', '👍', '😂'];
-            emojis.forEach(emoji => {
-                const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
-                if (users.length > 0) {
-                    const hasReacted = currentUser && users.includes(currentUser.uid);
-                    activeBadgesHtml += `
-                        <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
-                            <span>${emoji}</span>
-                            <span class="reaction-count">${users.length}</span>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        const footerActions = msgEl.querySelector('.message-footer-actions');
-        if (footerActions) {
-            footerActions.innerHTML = `
+            <div class="message-footer-actions">
                 <div class="reaction-picker">
                     <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
                     <button class="emoji-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
                     <button class="emoji-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
                 </div>
                 ${activeBadgesHtml ? `<div class="reactions-container">${activeBadgesHtml}</div>` : ''}
-            `;
-        }
-
-        const textEl = msgEl.querySelector('.message-text');
-        if (textEl && msg.text) {
-            textEl.innerText = msg.text;
-        }
-    }
-
-    function renderMessage(msg) {
-        const container = document.getElementById('messages-container');
-        const isSelf = currentUser && msg.senderId === currentUser.uid;
-        
-        const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
-        const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
-
-        const avatarHtml = renderAvatarContent(msg.senderPhoto, msg.senderInitials || getInitials(msg.senderName));
-
-        let replyHtml = '';
-        if (msg.replyTo) {
-            replyHtml = `
-                <div class="reply-quote">
-                    <div class="reply-quote-name">${escapeHtml(msg.replyTo.senderName)}</div>
-                    <div class="reply-quote-text">${escapeHtml(msg.replyTo.text || '[Bild]')}</div>
-                </div>
-            `;
-        }
-
-        let activeBadgesHtml = '';
-        if (msg.reactions) {
-            const emojis = ['❤️', '👍', '😂'];
-            emojis.forEach(emoji => {
-                const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
-                if (users.length > 0) {
-                    const hasReacted = currentUser && users.includes(currentUser.uid);
-                    activeBadgesHtml += `
-                        <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
-                            <span>${emoji}</span>
-                            <span class="reaction-count">${users.length}</span>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        const msgDiv = document.createElement('div');
-        msgDiv.id = `msg-${msg.id}`;
-        msgDiv.className = `message ${isSelf ? 'self' : ''}`;
-        
-        msgDiv.innerHTML = `
-            <div class="avatar-box" style="flex-shrink:0;">${avatarHtml}</div>
-            <div class="message-content-wrapper">
-                <div class="message-bubble">
-                    <div class="message-header">
-                        <span class="username">${isSelf ? 'Du' : escapeHtml(msg.senderName)}</span>
-                        <span class="timestamp">${timeStr}</span>
-                        ${msg.isEdited ? `<span class="edited-tag">(redigerad)</span>` : ''}
-                        <div class="message-actions">
-                            <button class="msg-action-btn" title="Svara" onclick="prepareReply('${msg.id}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                            </button>
-                            ${isSelf ? `
-                            <button class="msg-action-btn" title="Redigera" onclick="prepareEdit('${msg.id}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            </button>
-                            <button class="msg-action-btn delete" title="Ta bort" onclick="deleteMessage('${msg.id}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                    ${replyHtml}
-                    ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
-                    ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openImageModal('${msg.image}')" />` : ''}
-                </div>
-
-                <div class="message-footer-actions">
-                    <div class="reaction-picker">
-                        <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
-                        <button class="emoji-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
-                        <button class="emoji-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
-                    </div>
-                    ${activeBadgesHtml ? `<div class="reactions-container">${activeBadgesHtml}</div>` : ''}
-                </div>
             </div>
-        `;
-        container.appendChild(msgDiv);
-    }
+        </div>
+    `;
+    container.appendChild(msgDiv);
+}
 
-    function toggleReaction(msgId, emoji) {
-        if (!currentUser) return;
-        const msgRef = db.collection('messages').doc(msgId);
+function toggleReaction(msgId, emoji) {
+    if (!currentUser) return;
+    const msgRef = db.collection('messages').doc(msgId);
+    
+    msgRef.get().then(doc => {
+        if (!doc.exists) return;
+        const data = doc.data();
         
-        msgRef.get().then(doc => {
-            if (!doc.exists) return;
-            const data = doc.data();
-            
-            const reactions = data.reactions || {};
-            const emojiUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+        const reactions = data.reactions || {};
+        const emojiUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
 
-            let updateField = {};
-            if (emojiUsers.includes(currentUser.uid)) {
-                updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayRemove(currentUser.uid);
-            } else {
-                updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayUnion(currentUser.uid);
-            }
-
-            return msgRef.update(updateField);
-        }).catch(err => console.error("Fel vid uppdatering av reaktion:", err));
-    }
-
-    function prepareReply(msgId) {
-        clearReplyOrEdit();
-        const msg = loadedMessages[msgId];
-        if (!msg) return;
-
-        replyingToMessage = {
-            id: msg.id,
-            senderName: msg.senderName,
-            text: msg.text || '[Bild]'
-        };
-
-        document.getElementById('reply-preview-title').innerText = `Svarar på ${msg.senderName}`;
-        document.getElementById('reply-text-preview').innerText = msg.text || '[Bild]';
-        document.getElementById('reply-preview-bar').style.display = 'flex';
-        document.getElementById('message-input').focus();
-    }
-
-    function prepareEdit(msgId) {
-        clearReplyOrEdit();
-        const msg = loadedMessages[msgId];
-        if (!msg) return;
-
-        editingMessageId = msg.id;
-
-        document.getElementById('reply-preview-title').innerText = 'Redigerar meddelande';
-        document.getElementById('reply-text-preview').innerText = msg.text || '';
-        document.getElementById('reply-preview-bar').style.display = 'flex';
-
-        const input = document.getElementById('message-input');
-        input.value = msg.text || '';
-        input.focus();
-
-        document.getElementById('btn-send-text').innerText = 'Spara';
-    }
-
-    function clearReplyOrEdit() {
-        replyingToMessage = null;
-        editingMessageId = null;
-        document.getElementById('reply-preview-bar').style.display = 'none';
-        document.getElementById('btn-send-text').innerText = 'Skicka';
-    }
-
-    function deleteMessage(msgId) {
-        if (!confirm('Vill du verkligen ta bort detta meddelande?')) return;
-
-        db.collection('messages').doc(msgId).delete()
-            .then(() => console.log('Meddelande borttaget'))
-            .catch(err => console.error('Fel vid borttagning:', err));
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('message-input');
-        const text = input.value.trim();
-
-        if (!text && !selectedImageData) return;
-        if (!currentUser) return;
-
-        if (editingMessageId) {
-            db.collection('messages').doc(editingMessageId).update({
-                text: text,
-                isEdited: true
-            }).catch(err => console.error("Fel vid redigering:", err));
-
-            input.value = '';
-            clearReplyOrEdit();
-            return;
+        let updateField = {};
+        if (emojiUsers.includes(currentUser.uid)) {
+            updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayRemove(currentUser.uid);
+        } else {
+            updateField[`reactions.${emoji}`] = firebase.firestore.FieldValue.arrayUnion(currentUser.uid);
         }
 
-        const messageData = {
-            chatId: activeChat.id,
-            senderId: currentUser.uid,
-            senderName: currentUser.name,
-            senderInitials: currentUser.initials,
-            senderPhoto: currentUser.photoURL,
+        return msgRef.update(updateField);
+    }).catch(err => console.error("Fel vid uppdatering av reaktion:", err));
+}
+
+function prepareReply(msgId) {
+    clearReplyOrEdit();
+    const msg = loadedMessages[msgId];
+    if (!msg) return;
+
+    replyingToMessage = {
+        id: msg.id,
+        senderName: msg.senderName,
+        text: msg.text || '[Bild]'
+    };
+
+    document.getElementById('reply-preview-title').innerText = `Svarar på ${msg.senderName}`;
+    document.getElementById('reply-text-preview').innerText = msg.text || '[Bild]';
+    document.getElementById('reply-preview-bar').style.display = 'flex';
+    document.getElementById('message-input').focus();
+}
+
+function prepareEdit(msgId) {
+    clearReplyOrEdit();
+    const msg = loadedMessages[msgId];
+    if (!msg) return;
+
+    editingMessageId = msg.id;
+
+    document.getElementById('reply-preview-title').innerText = 'Redigerar meddelande';
+    document.getElementById('reply-text-preview').innerText = msg.text || '';
+    document.getElementById('reply-preview-bar').style.display = 'flex';
+
+    const input = document.getElementById('message-input');
+    input.value = msg.text || '';
+    input.focus();
+
+    document.getElementById('btn-send-text').innerText = 'Spara';
+}
+
+function clearReplyOrEdit() {
+    replyingToMessage = null;
+    editingMessageId = null;
+    document.getElementById('reply-preview-bar').style.display = 'none';
+    document.getElementById('btn-send-text').innerText = 'Skicka';
+}
+
+function deleteMessage(msgId) {
+    if (!confirm('Vill du verkligen ta bort detta meddelande?')) return;
+
+    db.collection('messages').doc(msgId).delete()
+        .then(() => console.log('Meddelande borttaget'))
+        .catch(err => console.error('Fel vid borttagning:', err));
+}
+
+function sendMessage() {
+    const input = document.getElementById('message-input');
+    const text = input.value.trim();
+
+    if (!text && !selectedImageData) return;
+    if (!currentUser) return;
+
+    if (editingMessageId) {
+        db.collection('messages').doc(editingMessageId).update({
             text: text,
-            image: selectedImageData || null,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            reactions: {}
-        };
-
-        if (replyingToMessage) {
-            messageData.replyTo = replyingToMessage;
-        }
-
-        db.collection('messages').add(messageData)
-            .catch(err => console.error("Fel vid sparande av meddelande:", err));
+            isEdited: true
+        }).catch(err => console.error("Fel vid redigering:", err));
 
         input.value = '';
-        clearImagePreview();
         clearReplyOrEdit();
+        return;
     }
 
-    function resizeImage(file, maxWidth, maxHeight, quality, callback) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+    const messageData = {
+        chatId: activeChat.id,
+        senderId: currentUser.uid,
+        senderName: currentUser.name,
+        senderInitials: currentUser.initials,
+        senderPhoto: currentUser.photoURL,
+        text: text,
+        image: selectedImageData || null,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        reactions: {}
+    };
 
-                if (width > height) {
-                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                } else {
-                    if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
-                }
+    if (replyingToMessage) {
+        messageData.replyTo = replyingToMessage;
+    }
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.src = e.target.result;
+    db.collection('messages').add(messageData)
+        .catch(err => console.error("Fel vid sparande av meddelande:", err));
+
+    input.value = '';
+    clearImagePreview();
+    clearReplyOrEdit();
+}
+
+function resizeImage(file, maxWidth, maxHeight, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+            } else {
+                if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', quality));
         };
-        reader.readAsDataURL(file);
-    }
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
-    function handleImageSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            resizeImage(file, 800, 800, 0.7, base64Img => {
-                selectedImageData = base64Img;
-                document.getElementById('image-preview-src').src = selectedImageData;
-                document.getElementById('preview-box').style.display = 'block';
-            });
-        }
-    }
-
-    function clearImagePreview() {
-        selectedImageData = null;
-        document.getElementById('file-input').value = '';
-        document.getElementById('preview-box').style.display = 'none';
-    }
-
-    function renderAvatarContent(photoURL, initials) {
-        if (photoURL) {
-            return `<img src="${photoURL}" alt="Avatar" />`;
-        }
-        return initials || 'U';
-    }
-
-    function getInitials(name) {
-        if (!name) return 'U';
-        const parts = name.trim().split(' ');
-        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-        return name.substring(0, 2).toUpperCase();
-    }
-
-    function escapeHtml(str) {
-        return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
-    }
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
-            .then(reg => console.log('Firebase Service Worker registrerad:', reg))
-            .catch(err => console.error('Service Worker fel:', err));
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        resizeImage(file, 800, 800, 0.7, base64Img => {
+            selectedImageData = base64Img;
+            document.getElementById('image-preview-src').src = selectedImageData;
+            document.getElementById('preview-box').style.display = 'block';
         });
     }
+}
+
+function clearImagePreview() {
+    selectedImageData = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('preview-box').style.display = 'none';
+}
+
+function renderAvatarContent(photoURL, initials) {
+    if (photoURL) {
+        return `<img src="${photoURL}" alt="Avatar" />`;
+    }
+    return initials || 'U';
+}
+
+function getInitials(name) {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+}
+
+function escapeHtml(str) {
+    return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/TE4chatt/firebase-messaging-sw.js')
+        .then(reg => console.log('Firebase Service Worker registrerad:', reg))
+        .catch(err => console.error('Service Worker fel:', err));
+    });
+}
+</script>
+
 </script>
 
 </body>
