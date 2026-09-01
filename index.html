@@ -1306,6 +1306,7 @@
             editBtn.style.display = 'none';
         }
 
+        document.getElementById('messages-container').innerHTML = '';
         updateActiveUI();
         clearReplyOrEdit();
         loadMessages();
@@ -1318,6 +1319,7 @@
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
         document.getElementById('btn-edit-channel').style.display = 'none';
         
+        document.getElementById('messages-container').innerHTML = '';
         updateActiveUI();
         clearReplyOrEdit();
         loadMessages();
@@ -1354,7 +1356,6 @@
     function loadMessages() {
         if (unsubscribeMessages) unsubscribeMessages();
         const container = document.getElementById('messages-container');
-        container.innerHTML = '';
         loadedMessages = {};
 
         unsubscribeMessages = db.collection('messages')
@@ -1365,7 +1366,7 @@
                     return;
                 }
 
-                if (container.querySelector('.message') === null) {
+                if (!container.querySelector('.message')) {
                     container.innerHTML = '';
                 }
 
@@ -1385,9 +1386,9 @@
                 const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
 
                 msgs.forEach(msg => {
-                    const existingMsgEl = document.getElementById(`msg-${msg.id}`);
-                    if (existingMsgEl) {
-                        updateExistingMessage(existingMsgEl, msg);
+                    const existingEl = document.getElementById(`msg-${msg.id}`);
+                    if (existingEl) {
+                        updateReactionsUI(msg);
                     } else {
                         renderMessage(msg);
                     }
@@ -1399,7 +1400,10 @@
             });
     }
 
-    function updateExistingMessage(msgEl, msg) {
+    function updateReactionsUI(msg) {
+        const msgEl = document.getElementById(`msg-${msg.id}`);
+        if (!msgEl) return;
+
         let activeBadgesHtml = '';
         if (msg.reactions) {
             const emojis = ['❤️', '👍', '😂'];
