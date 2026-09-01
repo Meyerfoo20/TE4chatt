@@ -1360,12 +1360,13 @@
         unsubscribeMessages = db.collection('messages')
             .where('chatId', '==', activeChat.id)
             .onSnapshot(snapshot => {
-                container.innerHTML = '';
-                loadedMessages = {};
-
                 if (snapshot.empty) {
                     container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
                     return;
+                }
+
+                if (container.querySelector('.message') === null) {
+                    container.innerHTML = '';
                 }
 
                 const msgs = [];
@@ -1381,9 +1382,57 @@
                     return tA - tB;
                 });
 
-                msgs.forEach(msg => renderMessage(msg));
-                container.scrollTop = container.scrollHeight;
+                const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+                msgs.forEach(msg => {
+                    const existingMsgEl = document.getElementById(`msg-${msg.id}`);
+                    if (existingMsgEl) {
+                        updateExistingMessage(existingMsgEl, msg);
+                    } else {
+                        renderMessage(msg);
+                    }
+                });
+
+                if (isScrolledToBottom) {
+                    container.scrollTop = container.scrollHeight;
+                }
             });
+    }
+
+    function updateExistingMessage(msgEl, msg) {
+        let activeBadgesHtml = '';
+        if (msg.reactions) {
+            const emojis = ['❤️', '👍', '😂'];
+            emojis.forEach(emoji => {
+                const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+                if (users.length > 0) {
+                    const hasReacted = currentUser && users.includes(currentUser.uid);
+                    activeBadgesHtml += `
+                        <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
+                            <span>${emoji}</span>
+                            <span class="reaction-count">${users.length}</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        const footerActions = msgEl.querySelector('.message-footer-actions');
+        if (footerActions) {
+            footerActions.innerHTML = `
+                <div class="reaction-picker">
+                    <button class="emoji-btn" title="Hjärta" onclick="toggleReaction('${msg.id}', '❤️')">❤️</button>
+                    <button class="emoji-btn" title="Tumme upp" onclick="toggleReaction('${msg.id}', '👍')">👍</button>
+                    <button class="emoji-btn" title="Skratta" onclick="toggleReaction('${msg.id}', '😂')">😂</button>
+                </div>
+                ${activeBadgesHtml ? `<div class="reactions-container">${activeBadgesHtml}</div>` : ''}
+            `;
+        }
+
+        const textEl = msgEl.querySelector('.message-text');
+        if (textEl && msg.text) {
+            textEl.innerText = msg.text;
+        }
     }
 
     function renderMessage(msg) {
@@ -1409,7 +1458,7 @@
         if (msg.reactions) {
             const emojis = ['❤️', '👍', '😂'];
             emojis.forEach(emoji => {
-                const users = msg.reactions[emoji] || [];
+                const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
                 if (users.length > 0) {
                     const hasReacted = currentUser && users.includes(currentUser.uid);
                     activeBadgesHtml += `
@@ -1423,6 +1472,7 @@
         }
 
         const msgDiv = document.createElement('div');
+        msgDiv.id = `msg-${msg.id}`;
         msgDiv.className = `message ${isSelf ? 'self' : ''}`;
         
         msgDiv.innerHTML = `
@@ -1472,8 +1522,9 @@
         msgRef.get().then(doc => {
             if (!doc.exists) return;
             const data = doc.data();
+            
             const reactions = data.reactions || {};
-            const emojiUsers = reactions[emoji] || [];
+            const emojiUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
 
             let updateField = {};
             if (emojiUsers.includes(currentUser.uid)) {
