@@ -19,6 +19,34 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <link rel="stylesheet" href="style.css">
+    <style>
+        @media (max-width: 600px) {
+            .calendar-nav .nav-text-full,
+            .calendar-nav .nav-text-short {
+                display: none !important;
+            }
+
+            .calendar-nav button {
+                padding: 8px 12px;
+                font-size: 1.1rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 40px;
+                height: 40px;
+                border-radius: 10px;
+            }
+
+            .calendar-header {
+                padding-right: 35px;
+                gap: 10px;
+            }
+
+            .calendar-header h2 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
 
 </head>
 <body>
@@ -223,11 +251,11 @@
                 <button onclick="changeWeek(-1)" aria-label="Föregående vecka">
                     <span>&larr;</span>
                     <span class="nav-text-full">Föregående</span>
-                    <span class="nav-text-short">Föreg.</span>
+                    <span class="nav-text-short">←</span>
                 </button>
                 <button onclick="changeWeek(1)" aria-label="Nästa vecka">
                     <span class="nav-text-full">Nästa</span>
-                    <span class="nav-text-short">Nästa</span>
+                    <span class="nav-text-short">→</span>
                     <span>&rarr;</span>
                 </button>
                 <button onclick="openAddEventModal()" class="add-event-btn">

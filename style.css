@@ -1150,148 +1150,10 @@ body {
         }
 
 /* Kalender Popup & Modal Stylings */
+
+/* Huvudbehållare för kalendermodalen */
 .calendar-modal-content {
-    background: var(--bg-dark);
-    border: 1px solid var(--border-glass);
-    border-radius: 18px;
-    width: 90vw;
-    max-width: 1100px;
-    height: 85vh;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-    position: relative;
-    color: var(--text-white);
-}
-
-.calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-right: 40px;
-}
-
-.calendar-nav {
-    display: flex;
-    gap: 10px;
-}
-
-.calendar-nav button, .save-btn {
-    background: var(--gradient-btn);
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.calendar-grid-container {
-    flex: 1;
-    overflow-y: auto;
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    background: rgba(6, 5, 10, 0.5);
-}
-
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    min-width: 700px;
-    height: 100%;
-}
-
-.day-column {
-    border-right: 1px solid var(--border-glass);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-.day-column:last-child {
-    border-right: none;
-}
-
-.day-header {
-    background: rgba(217, 70, 239, 0.1);
-    padding: 10px;
-    text-align: center;
-    font-weight: 700;
-    border-bottom: 1px solid var(--border-glass);
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    backdrop-filter: blur(10px);
-}
-
-.day-events {
-    flex: 1;
-    position: relative;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.calendar-event {
-    background: var(--bg-card);
-    border-left: 4px solid var(--pink-main);
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 0.85rem;
-    color: var(--text-white);
-    box-shadow: var(--shadow-glow);
-}
-
-.calendar-event.custom {
-    border-left-color: #8b5cf6;
-    background: rgba(139, 92, 246, 0.2);
-}
-
-/* Event Splitting Grid för krockar */
-.event-row-split {
-    display: flex;
-    gap: 4px;
-    width: 100%;
-}
-
-.event-row-split .calendar-event {
-    flex: 1;
-}
-
-/* Form Styling */
-.event-form-content {
-    background: var(--bg-dark);
-    border: 1px solid var(--border-glass);
-    padding: 24px;
-    border-radius: 16px;
-    width: 320px;
-    color: white;
-    position: relative;
-}
-
-.event-form-content form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 14px;
-}
-
-.event-form-content input, .event-form-content select {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-glass);
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-
-.calendar-modal-content {
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     width: 94vw;
@@ -1304,6 +1166,8 @@ body {
     position: relative;
     color: #ffffff;
     box-sizing: border-box;
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 .calendar-header {
@@ -1332,7 +1196,8 @@ body {
     gap: 8px;
 }
 
-.calendar-nav button, .save-btn {
+.calendar-nav button, 
+.save-btn {
     background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
     border: none;
     color: white;
@@ -1349,13 +1214,15 @@ body {
     box-shadow: 0 4px 12px rgba(217, 70, 239, 0.25);
 }
 
-.calendar-nav button:hover, .save-btn:hover {
+.calendar-nav button:hover, 
+.save-btn:hover {
     opacity: 0.92;
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(217, 70, 239, 0.35);
 }
 
-.calendar-nav button:active, .save-btn:active {
+.calendar-nav button:active, 
+.save-btn:active {
     transform: translateY(0);
 }
 
@@ -1367,6 +1234,7 @@ body {
     display: none;
 }
 
+/* Kalender-grid och scroll-område */
 .calendar-grid-container {
     flex: 1;
     overflow-x: auto;
@@ -1375,6 +1243,7 @@ body {
     border-radius: 14px;
     background: rgba(6, 5, 10, 0.6);
     -webkit-overflow-scrolling: touch;
+    contain: content;
 }
 
 .calendar-grid {
@@ -1397,7 +1266,7 @@ body {
 }
 
 .day-header {
-    background: rgba(217, 70, 239, 0.12);
+    background: #1e112a;
     padding: 10px 8px;
     text-align: center;
     font-weight: 700;
@@ -1406,8 +1275,6 @@ body {
     position: sticky;
     top: 0;
     z-index: 5;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     color: #f0abfc;
     letter-spacing: 0.3px;
 }
@@ -1421,6 +1288,7 @@ body {
     gap: 8px;
 }
 
+/* Kalenderhändelser */
 .calendar-event {
     background: rgba(217, 70, 239, 0.2);
     border-left: 3px solid #d946ef;
@@ -1429,11 +1297,11 @@ body {
     font-size: 0.8rem;
     color: #ffffff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-    transition: transform 0.15s ease;
+    transition: background 0.2s ease;
 }
 
 .calendar-event:hover {
-    transform: scale(1.01);
+    background: rgba(217, 70, 239, 0.3);
 }
 
 .calendar-event.planering {
@@ -1447,17 +1315,20 @@ body {
     background: rgba(168, 85, 247, 0.22);
 }
 
+/* Hantering av flera krockande händelser */
 .event-row-split {
     display: flex;
+    flex-direction: column;
     gap: 4px;
     width: 100%;
 }
 
 .event-row-split .calendar-event {
-    flex: 1;
+    width: 100%;
+    flex: none;  
 }
 
-/* Styling för "Lägg till händelse"-kortet */
+/* Styling för "Lägg till händelse"-formuläret */
 .event-form-content {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1577,7 +1448,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* Anpassningar för mobila skärmar */
+/* Mobilanpassningar för kalendern */
 @media (max-width: 640px) {
     .calendar-modal-content {
         width: 96vw;
@@ -1602,7 +1473,8 @@ body {
         gap: 6px;
     }
 
-    .calendar-nav button, .save-btn {
+    .calendar-nav button, 
+    .save-btn {
         padding: 7px 10px;
         font-size: 0.78rem;
         border-radius: 8px;
@@ -1635,6 +1507,16 @@ body {
     }
 }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(217, 70, 239, 0.2); border-radius: 10px; }
+/* Custom Scrollbar */
+::-webkit-scrollbar { 
+    width: 5px; 
+}
+
+::-webkit-scrollbar-track { 
+    background: transparent; 
+}
+
+::-webkit-scrollbar-thumb { 
+    background: rgba(217, 70, 239, 0.2); 
+    border-radius: 10px; 
+}
