@@ -596,33 +596,34 @@
     <div class="event-form-content">
         <button class="modal-close-btn" onclick="closeAddEventModal()">&times;</button>
         <h3>Lägg till ny händelse</h3>
-        <form id="eventForm">
-            <div class="mb-3">
-                <label for="eventTitle" class="form-label">Titel</label>
-                <input type="text" class="form-control" id="eventTitle" required>
-            </div>
-            <div class="mb-3">
-                <label for="eventDate" class="form-label">Datum</label>
-                <input type="date" class="form-control" id="eventDate" required>
+        <form id="add-event-form">
+            <div class="form-group">
+                <label for="event-title">Titel</label>
+                <input type="text" id="event-title" required placeholder="t.ex. Möte">
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="startTime" class="form-label">Starttid</label>
-                    <input type="time" class="form-control" id="startTime" required>
+            <div class="form-group">
+                <label for="event-date">Datum</label>
+                <input type="date" id="event-date" required>
+            </div>
+
+            <div class="time-inputs">
+                <div class="form-group">
+                    <label for="event-start">Starttid</label>
+                    <input type="time" id="event-start" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="endTime" class="form-label">Sluttid</label>
-                    <input type="time" class="form-control" id="endTime" required>
+                <div class="form-group">
+                    <label for="event-end">Sluttid</label>
+                    <input type="time" id="event-end" required>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Spara händelse</button>
+            <button type="submit" class="save-btn">Spara händelse</button>
         </form>
     </div>
 </div>
 
-<script>
+<script type="module">
     const firebaseConfig = {
         apiKey: "AIzaSyCm8ZEQN0ejLLmEI0pdnj86Wm57y0oOGDQ",
         authDomain: "te4chatt.firebaseapp.com",
@@ -659,32 +660,32 @@
     // Kalender-tillstånd med schemat
     const baseSchedule = [
         // Måndag
-        { day: 1, title: 'MJUKVARUDESIGN LWA', start: '08:30', end: '09:40' },
-        { day: 1, title: 'MJUKVARUDESIGN JN', start: '09:50', end: '11:00' },
-        { day: 1, title: 'MJUKVARUDESIGN VK', start: '12:05', end: '13:30' },
+        { day: 1, title: 'MJUKVARUDESIGN - LWA', start: '08:30', end: '09:40' },
+        { day: 1, title: 'MJUKVARUDESIGN - JN', start: '09:50', end: '11:00' },
+        { day: 1, title: 'MJUKVARUDESIGN - VK', start: '12:05', end: '13:30' },
         { day: 1, title: 'MJUKVARUDESIGN', start: '13:35', end: '15:30' },
 
         // Tisdag
         { day: 2, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
-        { day: 2, title: 'MJUKVARUDESIGN VK', start: '09:35', end: '11:00' },
+        { day: 2, title: 'MJUKVARUDESIGN - VK', start: '09:35', end: '11:00' },
         { day: 2, title: 'MJUKVARUDESIGN', start: '12:00', end: '12:55' },
-        { day: 2, title: 'MJUKVARUDESIGN LWA', start: '13:00', end: '14:25' },
+        { day: 2, title: 'MJUKVARUDESIGN - LWA', start: '13:00', end: '14:25' },
         { day: 2, title: 'MJUKVARUDESIGN', start: '14:30', end: '15:30' },
 
         // Onsdag
         { day: 3, title: 'MJUKVARUDESIGN', start: '08:30', end: '09:30' },
-        { day: 3, title: 'MJUKVARUDESIGN LWA', start: '09:40', end: '11:05' },
-        { day: 3, title: 'PLANERINGSTID JN,VK,LWA', start: '11:45', end: '13:10', isPlanering: true },
+        { day: 3, title: 'MJUKVARUDESIGN - LWA', start: '09:40', end: '11:05' },
+        { day: 3, title: 'PLANERINGSTID - JN,VK,LWA', start: '11:45', end: '13:10', isPlanering: true },
         { day: 3, title: 'MJUKVARUDESIGN', start: '13:15', end: '15:30' },
 
         // Torsdag
-        { day: 4, title: 'MJUKVARUDESIGN VK', start: '08:30', end: '09:35' },
+        { day: 4, title: 'MJUKVARUDESIGN - VK', start: '08:30', end: '09:35' },
         { day: 4, title: 'MJUKVARUDESIGN', start: '09:40', end: '11:05' },
         { day: 4, title: 'MJUKVARUDESIGN', start: '12:00', end: '13:15' },
-        { day: 4, title: 'MJUKVARUDESIGN JN', start: '13:20', end: '15:30' },
+        { day: 4, title: 'MJUKVARUDESIGN - JN', start: '13:20', end: '15:30' },
 
         // Fredag
-        { day: 5, title: 'MJUKVARUDESIGN LWA,JN', start: '08:30', end: '09:50' },
+        { day: 5, title: 'MJUKVARUDESIGN - LWA,JN', start: '08:30', end: '09:50' },
         { day: 5, title: 'MJUKVARUDESIGN', start: '12:00', end: '15:30' }
     ];
 
@@ -768,6 +769,8 @@
 
     function openAddEventModal() {
         document.getElementById('add-event-modal').style.display = 'flex';
+        const form = document.getElementById('add-event-form');
+        form.onsubmit = saveCustomEvent;
     }
 
     function closeAddEventModal() {
@@ -795,14 +798,14 @@
     async function saveCustomEvent(e) {
         e.preventDefault();
         const title = document.getElementById('event-title').value.trim();
-        const day = parseInt(document.getElementById('event-day').value);
+        const date = document.getElementById('event-date').value; // format: "YYYY-MM-DD"
         const start = document.getElementById('event-start').value;
         const end = document.getElementById('event-end').value;
 
         try {
             await db.collection('calendar_events').add({
                 title,
-                day,
+                date,
                 start,
                 end,
                 createdBy: currentUser ? currentUser.uid : 'Anonym',
@@ -854,6 +857,12 @@
             const dayDate = new Date(targetMonday);
             dayDate.setDate(targetMonday.getDate() + index);
 
+            // Skapa datumsträng i ISO-format (YYYY-MM-DD) för matchning med input-type="date"
+            const year = dayDate.getFullYear();
+            const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+            const day = String(dayDate.getDate()).padStart(2, '0');
+            const isoDateStr = `${year}-${month}-${day}`;
+
             const dayStr = `${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
 
             const col = document.createElement('div');
@@ -867,9 +876,10 @@
             const eventsContainer = document.createElement('div');
             eventsContainer.className = 'day-events';
 
+            // Matcha schemat (baserat på veckodag) och anpassade händelser (baserat på datum)
             const dayEvents = [
                 ...baseSchedule.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: true })),
-                ...customEvents.filter(e => e.day === dayNum).map(e => ({ ...e, isBase: false }))
+                ...customEvents.filter(e => e.date === isoDateStr).map(e => ({ ...e, isBase: false }))
             ].sort((a, b) => a.start.localeCompare(b.start));
 
             const groups = groupOverlappingEvents(dayEvents);
