@@ -1390,11 +1390,13 @@
 window.addEventListener('load', () => {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-
         setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 500);
+            loadingScreen.classList.add('hidden');
+
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 1000);
+        }, 2500); 
     }
 });
 </script>
