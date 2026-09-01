@@ -50,6 +50,9 @@
 
 </head>
 <body>
+<div id="loading-screen" class="loading-screen">
+    <img src="logo.png" alt="Laddar..." class="loading-logo">
+</div>
 
 <div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebars()"></div>
 
@@ -1383,6 +1386,17 @@
         });
     }
 </script>
+<script>
+window.addEventListener('load', () => {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
 
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }
+});
+</script>
 </body>
 </html>

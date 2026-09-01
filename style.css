@@ -1520,3 +1520,52 @@ body {
     background: rgba(217, 70, 239, 0.2); 
     border-radius: 10px; 
 }
+
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 1;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loading-logo {
+    width: 120px;
+    height: auto;
+    object-fit: contain;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+    .loading-logo {
+        width: 160px;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
