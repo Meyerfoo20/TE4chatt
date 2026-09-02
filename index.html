@@ -1235,10 +1235,6 @@ function loadMessages() {
                 return;
             }
 
-            if (!container.querySelector('.message') && !container.querySelector('.unread-divider')) {
-                container.innerHTML = '';
-            }
-
             const msgs = [];
             snapshot.forEach(doc => {
                 const msgData = { id: doc.id, ...doc.data() };
@@ -1246,30 +1242,37 @@ function loadMessages() {
                 loadedMessages[doc.id] = msgData;
             });
 
+            // Säkrad sortering: Äldst överst, nyast längst ned
             msgs.sort((a, b) => {
-                const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-                const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
-                return tA - tB; // Nyast överst, äldst underst
+                const getTime = (m) => {
+                    if (m.timestamp && typeof m.timestamp.toMillis === 'function') {
+                        return m.timestamp.toMillis();
+                    }
+                    if (m.timestamp instanceof Date) {
+                        return m.timestamp.getTime();
+                    }
+                    return Date.now(); // Reserv för lokala meddelanden innan servern svarat
+                };
+                return getTime(a) - getTime(b);
             });
 
-            const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+            // Töm containern varje gång för att garantera att DOM-trädet följer den sorterade ordningen
+            container.innerHTML = '';
 
+            const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
             let unreadDividerAdded = false;
 
             msgs.forEach(msg => {
-                const msgTime = msg.timestamp ? msg.timestamp.toMillis() : Date.now();
+                const msgTime = msg.timestamp && typeof msg.timestamp.toMillis === 'function' 
+                    ? msg.timestamp.toMillis() 
+                    : Date.now();
 
                 if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
                     renderUnreadDivider();
                     unreadDividerAdded = true;
                 }
 
-                const existingEl = document.getElementById(`msg-${msg.id}`);
-                if (existingEl) {
-                    updateReactionsUI(msg);
-                } else {
-                    renderMessage(msg);
-                }
+                renderMessage(msg);
             });
 
             if (isScrolledToBottom) {
@@ -1279,7 +1282,6 @@ function loadMessages() {
             saveLastReadTime(activeChat.id);
         });
 }
-
 function updateReactionsUI(msg) {
     const msgEl = document.getElementById(`msg-${msg.id}`);
     if (!msgEl) return;
