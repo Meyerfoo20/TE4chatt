@@ -231,6 +231,12 @@
                 
                 <input type="text" class="chat-input" id="message-input" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
                 
+                <button type="button" id="mic-btn" class="mic-btn" title="Starta röstinmatning" onclick="toggleSpeechRecognition()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                </button>
                 <button class="btn-send" id="btn-send-msg" onclick="sendMessage()">
                     <span id="btn-send-text">Skicka</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -1613,6 +1619,66 @@ function linkify(text) {
         const href = url.startsWith('www.') ? `https://${url}` : url;
         return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>`;
     });
+}
+
+let recognition = null;
+let isListening = false;
+
+function toggleSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.getElementById('mic-btn');
+    // Byt 'message-input' mot ID:t på ditt textfält om det heter något annat
+    const chatInput = document.getElementById('message-input') || document.querySelector('input[type="text"]');
+
+    if (!SpeechRecognition) {
+        alert('Din webbläsare stöder inte röstinmatning. Prova Chrome, Edge eller Safari.');
+        return;
+    }
+
+    if (!recognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'sv-SE'; // Svensk röstinmatning
+        recognition.continuous = true; // Fortsätt lyssna tills du stänger av
+        recognition.interimResults = true; // Visa texten direkt medan man talar
+
+        let baseText = '';
+
+        recognition.onstart = () => {
+            isListening = true;
+            micBtn.classList.add('listening');
+            micBtn.setAttribute('title', 'Klicka för att stoppa röstinmatning');
+            baseText = chatInput.value ? chatInput.value + ' ' : '';
+        };
+
+        recognition.onresult = (event) => {
+            let currentTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                currentTranscript += event.results[i][0].transcript;
+            }
+            chatInput.value = baseText + currentTranscript;
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Röstinmatningsfel:', event.error);
+            stopListening();
+        };
+
+        recognition.onend = () => {
+            stopListening();
+        };
+    }
+
+    function stopListening() {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micBtn.setAttribute('title', 'Starta röstinmatning');
+    }
+
+    if (isListening) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
 }
 
 // Konfettieffekt vid klick på chattens bakgrund

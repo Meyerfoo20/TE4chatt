@@ -1713,3 +1713,44 @@ body {
 .chat-link:hover {
     color: #60a5fa;
 }
+
+/* Mikrofonknapp */
+.mic-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(217, 70, 239, 0.3);
+    color: #d946ef;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+
+.mic-btn:hover {
+    background: rgba(217, 70, 239, 0.2);
+    border-color: #d946ef;
+    box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
+    transform: scale(1.05);
+}
+
+.mic-btn.listening {
+    background: #ec4899;
+    color: #ffffff;
+    border-color: #f472b6;
+    animation: micPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes micPulse {
+    0% {
+        box-shadow: 0 0 8px #ec4899, 0 0 12px rgba(236, 72, 153, 0.5);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 18px #ec4899, 0 0 28px rgba(244, 114, 182, 0.8);
+        transform: scale(1.1);
+    }
+}
