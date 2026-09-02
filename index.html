@@ -1240,6 +1240,7 @@ function loadMessages() {
                 const msgData = { id: doc.id, ...doc.data() };
                 msgs.push(msgData);
                 loadedMessages[doc.id] = msgData;
+                
             });
 
             // Säkrad sortering: Äldst överst, nyast längst ned
@@ -1283,7 +1284,7 @@ function loadMessages() {
         });
 }
 function updateReactionsUI(msg) {
-    const msgEl = document.getElementById(`msg-${msg.id}`);
+    const msgEl = document.getElementById(`msg-${msg.id}`); 
     if (!msgEl) return;
 
     let activeBadgesHtml = '';
@@ -1317,7 +1318,7 @@ function updateReactionsUI(msg) {
 
     const textEl = msgEl.querySelector('.message-text');
     if (textEl && msg.text) {
-        textEl.innerText = msg.text;
+        textEl.innerHTML = linkify(msg.text);
     }
 }
 
@@ -1386,7 +1387,7 @@ function renderMessage(msg) {
                     </div>
                 </div>
                 ${replyHtml}
-                ${msg.text ? `<div class="message-text">${escapeHtml(msg.text)}</div>` : ''}
+                ${msg.text ? `<div class="message-text">${linkify(msg.text)}</div>` : ''}
                 ${msg.image ? `<img src="${msg.image}" class="uploaded-img" onclick="openImageModal('${msg.image}')" />` : ''}
             </div>
 
@@ -1600,6 +1601,18 @@ function getInitials(name) {
 
 function escapeHtml(str) {
     return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+}
+
+function linkify(text) {
+    if (!text) return '';
+    
+    const escapedText = escapeHtml(text);
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    
+    return escapedText.replace(urlRegex, (url) => {
+        const href = url.startsWith('www.') ? `https://${url}` : url;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>`;
+    });
 }
 
 if ('serviceWorker' in navigator) {

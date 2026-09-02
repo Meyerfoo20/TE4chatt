@@ -1662,3 +1662,13 @@ body {
     border-radius: 50%;
     margin-left: auto;
 }
+
+.chat-link {
+    color: #3b82f6;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.chat-link:hover {
+    color: #60a5fa;
+}
