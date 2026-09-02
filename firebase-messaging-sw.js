@@ -24,7 +24,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'te4-chatt-v35';
+const CACHE_NAME = 'te4-chatt-v36';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
