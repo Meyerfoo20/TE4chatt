@@ -339,6 +339,41 @@
 
     let isAppVisible = document.visibilityState === 'visible';
 
+    // Håller koll på senast lästa tidpunkt för aktiv chatt
+    let activeChatLastReadTime = null;
+
+    // --- Hjälpfunktioner för olästa meddelanden ---
+    function saveLastReadTime(chatId) {
+        if (!chatId) return;
+        const now = Date.now();
+        localStorage.setItem(`lastRead_${currentUser ? currentUser.uid : 'anon'}_${chatId}`, now.toString());
+    }
+
+    function getLastReadTime(chatId) {
+        if (!chatId) return null;
+        const val = localStorage.getItem(`lastRead_${currentUser ? currentUser.uid : 'anon'}_${chatId}`);
+        return val ? parseInt(val, 10) : null;
+    }
+
+    function renderUnreadDivider() {
+        const container = document.getElementById('messages-container');
+        if (document.getElementById('unread-divider-line')) return;
+
+        const divider = document.createElement('div');
+        divider.id = 'unread-divider-line';
+        divider.className = 'unread-divider';
+        divider.innerHTML = `
+            <div class="unread-divider-badge">
+                Olästa meddelanden
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+            </div>
+        `;
+        container.appendChild(divider);
+    }
+
     // Kalender-tillstånd med schemat
     const baseSchedule = [
         // Måndag
@@ -432,6 +467,9 @@
                 showAuthError("Det gick inte att ansluta till databasen.");
             });
         } else {
+            if (currentUser && activeChat && activeChat.id) {
+                saveLastReadTime(activeChat.id);
+            }
             currentUser = null;
             document.getElementById('auth-modal').style.display = 'flex';
             document.getElementById('user-footer').style.display = 'none';
@@ -767,6 +805,9 @@
 
     function handleLogout() {
         if (currentUser) {
+            if (activeChat && activeChat.id) {
+                saveLastReadTime(activeChat.id);
+            }
             db.collection('users').doc(currentUser.uid).update({ status: 'offline', inApp: false });
         }
         auth.signOut();
@@ -980,6 +1021,9 @@
     }
 
     function selectChannel(id, name, isCustom = false) {
+        if (activeChat && activeChat.id) {
+            saveLastReadTime(activeChat.id);
+        }
         activeChat = { id: id, type: 'channel', name: name, isCustom: isCustom };
         document.getElementById('current-chat-title').innerText = name;
         
@@ -998,6 +1042,9 @@
     }
 
     function selectDm(user) {
+        if (activeChat && activeChat.id) {
+            saveLastReadTime(activeChat.id);
+        }
         const chatId = getDmChatId(user.id);
         activeChat = { id: chatId, type: 'dm', name: `@ ${user.name}`, targetUser: user, isCustom: false };
         document.getElementById('current-chat-title').innerText = `@ ${user.name}`;
@@ -1042,15 +1089,19 @@
         const container = document.getElementById('messages-container');
         loadedMessages = {};
 
+        // Hämta tidpunkten när användaren senast besökte denna chatt
+        activeChatLastReadTime = getLastReadTime(activeChat.id);
+
         unsubscribeMessages = db.collection('messages')
             .where('chatId', '==', activeChat.id)
             .onSnapshot(snapshot => {
                 if (snapshot.empty) {
                     container.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin-top: 40px; font-size: 0.88rem;">Inga meddelanden ännu i ${activeChat.name}.</div>`;
+                    saveLastReadTime(activeChat.id);
                     return;
                 }
 
-                if (!container.querySelector('.message')) {
+                if (!container.querySelector('.message') && !container.querySelector('.unread-divider')) {
                     container.innerHTML = '';
                 }
 
@@ -1069,7 +1120,17 @@
 
                 const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
 
+                let unreadDividerAdded = false;
+
                 msgs.forEach(msg => {
+                    const msgTime = msg.timestamp ? msg.timestamp.toMillis() : Date.now();
+
+                    // Lägg till linjen för olästa meddelanden om det är ett nytt meddelande från någon annan
+                    if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
+                        renderUnreadDivider();
+                        unreadDividerAdded = true;
+                    }
+
                     const existingEl = document.getElementById(`msg-${msg.id}`);
                     if (existingEl) {
                         updateReactionsUI(msg);
@@ -1081,6 +1142,9 @@
                 if (isScrolledToBottom) {
                     container.scrollTop = container.scrollHeight;
                 }
+
+                // Uppdatera senast lästa tidpunkt
+                saveLastReadTime(activeChat.id);
             });
     }
 
@@ -1310,6 +1374,9 @@
         }
 
         db.collection('messages').add(messageData)
+            .then(() => {
+                saveLastReadTime(activeChat.id);
+            })
             .catch(err => console.error("Fel vid sparande av meddelande:", err));
 
         input.value = '';

@@ -1570,3 +1570,47 @@ body {
     opacity: 0;
     visibility: hidden;
 }
+
+/* Unread Messages Divider */
+.unread-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    position: relative;
+    width: 100%;
+}
+
+.unread-divider::before,
+.unread-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--pink-main), transparent);
+}
+
+.unread-divider-badge {
+    background: rgba(236, 72, 153, 0.2);
+    border: 1px solid var(--pink-main);
+    color: var(--pink-bright);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 10px;
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.unread-divider-badge svg {
+    animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
