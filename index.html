@@ -1516,6 +1516,10 @@ function sendMessage() {
         return;
     }
 
+    // Beräkna utgångsdatum (7 dagar från nu)
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 7);
+
     const messageData = {
         chatId: activeChat.id,
         senderId: currentUser.uid,
@@ -1525,6 +1529,7 @@ function sendMessage() {
         text: text,
         image: selectedImageData || null,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        expireAt: firebase.firestore.Timestamp.fromDate(expireDate), // <--- Lägg till TTL-fältet här
         reactions: {}
     };
 
