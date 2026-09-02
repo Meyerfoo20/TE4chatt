@@ -931,17 +931,57 @@ body {
 
         /* --- MODERNISERADE CHATTBUBBLOR --- */
         .messages-container {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 20px 16px;
+            gap: 18px;
+            position: relative;
+            cursor: pointer;
+
+            /* Mörk tech-bas med rutnät (grid) och neon-glöd i sidans färger */
+            background-color: #080612;
+            background-image: 
+                /* Cyan/Rosa subtilt rutnät */
+                linear-gradient(rgba(217, 70, 239, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(217, 70, 239, 0.06) 1px, transparent 1px),
+                /* Dynamiska glow-punkter */
+                radial-gradient(circle at 15% 20%, rgba(217, 70, 239, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(126, 34, 204, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(67, 56, 202, 0.10) 0%, transparent 65%);
+            background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%, 100% 100%;
+            background-position: -1px -1px, -1px -1px, 0 0, 0 0, 0 0;
+        }
+
+        /* Pulserande tech-glöd i bakgrunden */
+        .messages-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 10%, rgba(244, 114, 182, 0.08), transparent 70%);
+            animation: techGlowPulse 7s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes techGlowPulse {
+            0% { opacity: 0.3; transform: scale(0.98); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+            100% { opacity: 0.3; transform: scale(0.98); }
         }
 
         .message {
-            display: flex;
-            gap: 12px;
-            max-width: 80%;
-            align-self: flex-start;
+            position: relative;
+            z-index: 1;
+            cursor: default;
+        }
+
+        .chat-confetti-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            will-change: transform, opacity;
         }
 
         .message.self {
@@ -960,6 +1000,7 @@ body {
             align-items: flex-end;
         }
 
+        
         /* Uppdaterad bubbeldesign */
         .message-bubble {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
