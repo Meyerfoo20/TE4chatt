@@ -1249,7 +1249,7 @@ function loadMessages() {
             msgs.sort((a, b) => {
                 const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
                 const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
-                return tA - tB;
+                return tA - tB; // Nyast överst, äldst underst
             });
 
             const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
