@@ -1242,14 +1242,16 @@ function loadMessages() {
             }
 
             const msgs = [];
+            const currentMsgIds = new Set();
+
             snapshot.forEach(doc => {
                 const msgData = { id: doc.id, ...doc.data() };
                 msgs.push(msgData);
                 loadedMessages[doc.id] = msgData;
-                
+                currentMsgIds.add(doc.id);
             });
 
-            // Säkrad sortering: Äldst överst, nyast längst ned
+            // Sortering: Äldst överst, nyast längst ned
             msgs.sort((a, b) => {
                 const getTime = (m) => {
                     if (m.timestamp && typeof m.timestamp.toMillis === 'function') {
@@ -1258,28 +1260,47 @@ function loadMessages() {
                     if (m.timestamp instanceof Date) {
                         return m.timestamp.getTime();
                     }
-                    return Date.now(); // Reserv för lokala meddelanden innan servern svarat
+                    return Date.now();
                 };
                 return getTime(a) - getTime(b);
             });
 
-            // Töm containern varje gång för att garantera att DOM-trädet följer den sorterade ordningen
-            container.innerHTML = '';
-
             const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+            // Om containern har "Inga meddelanden ännu"-texten, rensa den för nya meddelanden
+            if (container.children.length === 1 && container.firstElementChild.innerText.includes('Inga meddelanden ännu')) {
+                container.innerHTML = '';
+            }
+
+            // Ta bort meddelanden ur DOM:en som har raderats i Firestore
+            const existingMsgEls = container.querySelectorAll('.message');
+            existingMsgEls.forEach(el => {
+                const id = el.id.replace('msg-', '');
+                if (!currentMsgIds.has(id)) {
+                    el.remove();
+                }
+            });
+
             let unreadDividerAdded = false;
 
             msgs.forEach(msg => {
-                const msgTime = msg.timestamp && typeof msg.timestamp.toMillis === 'function' 
-                    ? msg.timestamp.toMillis() 
-                    : Date.now();
+                const existingEl = document.getElementById(`msg-${msg.id}`);
+                if (existingEl) {
+                    // Om meddelandet redan finns: uppdatera enbart reaktioner (ingen blinkning)
+                    updateReactionsUI(msg);
+                } else {
+                    // Nytt meddelande: rita ut
+                    const msgTime = msg.timestamp && typeof msg.timestamp.toMillis === 'function' 
+                        ? msg.timestamp.toMillis() 
+                        : Date.now();
 
-                if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
-                    renderUnreadDivider();
-                    unreadDividerAdded = true;
+                    if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
+                        renderUnreadDivider();
+                        unreadDividerAdded = true;
+                    }
+
+                    renderMessage(msg);
                 }
-
-                renderMessage(msg);
             });
 
             if (isScrolledToBottom) {
@@ -1289,6 +1310,7 @@ function loadMessages() {
             saveLastReadTime(activeChat.id);
         });
 }
+
 function updateReactionsUI(msg) {
     const msgEl = document.getElementById(`msg-${msg.id}`); 
     if (!msgEl) return;
