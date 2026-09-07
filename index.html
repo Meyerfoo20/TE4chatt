@@ -1223,7 +1223,6 @@ function closeSidebars() {
     if (overlay) overlay.style.display = 'none';
 }
 
-// --- MEDDELANDEHANTERING ---
 function loadMessages() {
     if (unsubscribeMessages) unsubscribeMessages();
     const container = document.getElementById('messages-container');
@@ -1251,23 +1250,32 @@ function loadMessages() {
                 currentMsgIds.add(doc.id);
             });
 
+            // Säkrare tidskonvertering för cachen och obekräftade tidsstämplar
+            const getTime = (m) => {
+                if (!m.timestamp) return 0;
+                if (typeof m.timestamp.toMillis === 'function') {
+                    return m.timestamp.toMillis();
+                }
+                if (m.timestamp.seconds !== undefined) {
+                    return m.timestamp.seconds * 1000;
+                }
+                if (m.timestamp._seconds !== undefined) {
+                    return m.timestamp._seconds * 1000;
+                }
+                if (m.timestamp instanceof Date) {
+                    return m.timestamp.getTime();
+                }
+                if (typeof m.timestamp === 'number') {
+                    return m.timestamp;
+                }
+                return 0;
+            };
+
             // Sortering: Äldst överst, nyast längst ned
-            msgs.sort((a, b) => {
-                const getTime = (m) => {
-                    if (m.timestamp && typeof m.timestamp.toMillis === 'function') {
-                        return m.timestamp.toMillis();
-                    }
-                    if (m.timestamp instanceof Date) {
-                        return m.timestamp.getTime();
-                    }
-                    return Date.now();
-                };
-                return getTime(a) - getTime(b);
-            });
+            msgs.sort((a, b) => getTime(a) - getTime(b));
 
             const isScrolledToBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
 
-            // Om containern har "Inga meddelanden ännu"-texten, rensa den för nya meddelanden
             if (container.children.length === 1 && container.firstElementChild.innerText.includes('Inga meddelanden ännu')) {
                 container.innerHTML = '';
             }
@@ -1284,22 +1292,24 @@ function loadMessages() {
             let unreadDividerAdded = false;
 
             msgs.forEach(msg => {
-                const existingEl = document.getElementById(`msg-${msg.id}`);
+                const msgTime = getTime(msg);
+
+                if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
+                    renderUnreadDivider();
+                    unreadDividerAdded = true;
+                }
+
+                let existingEl = document.getElementById(`msg-${msg.id}`);
                 if (existingEl) {
-                    // Om meddelandet redan finns: uppdatera enbart reaktioner (ingen blinkning)
                     updateReactionsUI(msg);
                 } else {
-                    // Nytt meddelande: rita ut
-                    const msgTime = msg.timestamp && typeof msg.timestamp.toMillis === 'function' 
-                        ? msg.timestamp.toMillis() 
-                        : Date.now();
-
-                    if (activeChatLastReadTime && msgTime > activeChatLastReadTime && !unreadDividerAdded && msg.senderId !== currentUser?.uid) {
-                        renderUnreadDivider();
-                        unreadDividerAdded = true;
-                    }
-
                     renderMessage(msg);
+                    existingEl = document.getElementById(`msg-${msg.id}`);
+                }
+
+                // Säkerställer att DOM-noder flyttas så att ordningen i gränssnittet alltid matchar msgs-arrayen
+                if (existingEl) {
+                    container.appendChild(existingEl);
                 }
             });
 
