@@ -1381,6 +1381,7 @@ function renderMessage(msg) {
         `;
     }
 
+    // Bygg aktiva reaktions-badges med hovrings-info
     let activeBadgesHtml = '';
     if (msg.reactions) {
         const emojis = ['❤️', '👍', '😂'];
@@ -1388,8 +1389,19 @@ function renderMessage(msg) {
             const users = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
             if (users.length > 0) {
                 const hasReacted = currentUser && users.includes(currentUser.uid);
+
+                // Koppla användar-ID till användarnamn
+                const userNames = users.map(uid => {
+                    if (currentUser && uid === currentUser.uid) return 'Du';
+                    const userObj = allUsers.find(u => u.id === uid);
+                    return userObj ? userObj.name : 'Okänd';
+                }).join(', ');
+
                 activeBadgesHtml += `
-                    <div class="reaction-badge ${hasReacted ? 'active' : ''}" onclick="toggleReaction('${msg.id}', '${emoji}')">
+                    <div class="reaction-badge ${hasReacted ? 'active' : ''}" 
+                        onclick="toggleReaction('${msg.id}', '${emoji}')" 
+                        title="${escapeHtml(userNames)}" 
+                        data-tooltip="${escapeHtml(userNames)}">
                         <span>${emoji}</span>
                         <span class="reaction-count">${users.length}</span>
                     </div>

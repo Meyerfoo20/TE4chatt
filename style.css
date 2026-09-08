@@ -1754,3 +1754,33 @@ body {
         transform: scale(1.1);
     }
 }
+
+/* Svävande tooltip för reaktioner */
+.reaction-badge {
+    position: relative;
+}
+
+.reaction-badge[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(13, 10, 24, 0.95);
+    color: var(--text-white);
+    border: 1px solid var(--border-glass);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 20;
+}
+
+.reaction-badge[data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
