@@ -1591,8 +1591,8 @@ input:checked + .slider:before {
 
 /* Kalenderhändelser */
 .calendar-event {
-    background: rgba(217, 70, 239, 0.2);
-    border-left: 3px solid #d946ef;
+    background: rgba(9, 30, 105, 0.2);
+    border-left: 3px solid #464cef;
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 0.8rem;
@@ -1608,7 +1608,7 @@ input:checked + .slider:before {
 }
 
 .calendar-event.custom {
-    border-left-color: #a855f7;
+    border-left-color: #55b9f7;
     background: rgba(168, 85, 247, 0.22);
 }
 
@@ -1877,11 +1877,11 @@ input:checked + .slider:before {
 
 @keyframes micPulse {
     0% {
-        box-shadow: 0 0 8px #ec4899, 0 0 12px rgba(236, 72, 153, 0.5);
+        box-shadow: 0 0 8px #48ec71, 0 0 12px rgba(72, 236, 105, 0.5);
         transform: scale(1);
     }
     100% {
-        box-shadow: 0 0 18px #ec4899, 0 0 28px rgba(244, 114, 182, 0.8);
+        box-shadow: 0 0 18px #48ec6b, 0 0 28px rgba(114, 244, 157, 0.8);
         transform: scale(1.1);
     }
 }
@@ -1929,13 +1929,6 @@ input:checked + .slider:before {
     from { opacity: 1; transform: translateY(0) scale(1); }
     to { opacity: 0; transform: translateY(-20px) scale(0.9); }
 }
-
-
-/* =========================================================
-   CHAT THEME OVERRIDES
-   style(2).css colors take priority in the chat area.
-   Prevents oldstyle.css pink theme rules from overriding them.
-   ========================================================= */
 
 .chat-area {
     background: var(--bg-main) !important;
