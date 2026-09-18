@@ -1197,8 +1197,19 @@ input:checked + .slider:before {
 }
 
 /* Unread Messages Divider & Badges */
+.unread-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    position: relative;
+}
+
 .unread-divider::before,
 .unread-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent-pop), transparent);
 }
 
@@ -1275,4 +1286,707 @@ input:checked + .slider:before {
     font-weight: 600;
     font-size: 0.9rem;
     border: 1px solid var(--accent-pop);
+}
+
+/* ============================================================
+   MERGED FROM oldstyle.css
+   Existing style(2).css rules are preserved so its color theme remains active.
+   ============================================================ */
+
+.message-content {
+    background: var(--bg-card);
+    padding: 12px 16px;
+    border-radius: 18px;
+    border: 1px solid var(--border-glass);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    word-break: break-word;
+    position: relative;
+}
+
+.message.self .message-content {
+    background: linear-gradient(135deg, rgba(217, 70, 239, 0.25) 0%, rgba(67, 56, 202, 0.25) 100%);
+    border-color: rgba(244, 114, 182, 0.3);
+}
+
+.timestamp {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+/* Reactions Badges */
+.reactions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* Höger Sidopanel */
+.right-sidebar {
+    width: 250px;
+    background: var(--bg-glass);
+    border-left: 1px solid var(--border-glass);
+    padding: 20px 16px;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Kanal Skapa/Redigera checklist */
+.member-checkbox-list {
+    max-height: 180px;
+    overflow-y: auto;
+    background: var(--bg-black);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+/* Responsive CSS för Mobiler */
+@media (max-width: 768px) {
+    .btn-mobile-toggle {
+        display: flex;
+    }
+
+    .badge-premium {
+        display: none;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .right-sidebar {
+        position: fixed;
+        top: 0; right: 0; bottom: 0;
+        transform: translateX(100%);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+    }
+
+    .right-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .chat-header {
+        padding: 0 16px;
+    }
+
+    .messages-container {
+        padding: 16px;
+    }
+
+    .message {
+        max-width: 90%;
+    }
+
+    .message-actions {
+        opacity: 1;
+    }
+
+    .input-area {
+        padding: 12px 14px;
+    }
+
+    .btn-send span {
+        display: none;
+    }
+
+    .btn-send {
+        padding: 10px 14px;
+    }
+}
+
+.switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 18px;
+        }
+
+/* --- MODERNISERADE CHATTBUBBLOR --- */
+.messages-container {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+            cursor: pointer;
+
+            /* Mörk tech-bas med rutnät (grid) och neon-glöd i sidans färger */
+            background-color: #080612;
+            background-image: 
+                /* Cyan/Rosa subtilt rutnät */
+                linear-gradient(rgba(217, 70, 239, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(217, 70, 239, 0.06) 1px, transparent 1px),
+                /* Dynamiska glow-punkter */
+                radial-gradient(circle at 15% 20%, rgba(217, 70, 239, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(126, 34, 204, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(67, 56, 202, 0.10) 0%, transparent 65%);
+            background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%, 100% 100%;
+            background-position: -1px -1px, -1px -1px, 0 0, 0 0, 0 0;
+        }
+
+/* Pulserande tech-glöd i bakgrunden */
+        .messages-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 10%, rgba(244, 114, 182, 0.08), transparent 70%);
+            animation: techGlowPulse 7s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+.chat-confetti-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            will-change: transform, opacity;
+        }
+
+/* Uppdaterad bubbeldesign */
+        .message-bubble {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            padding: 12px 16px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(217, 70, 239, 0.3);
+            word-break: break-word;
+            backdrop-filter: blur(8px);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+/* Egna bubblor (Jag) */
+        .message.self .message-bubble {
+            border-radius: 18px;
+            border-top-right-radius: 4px;
+            background: linear-gradient(135deg, #15803d 0%, #064e3b 100%);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+.timestamp {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+/* Valbara reaktioner & aktiva badges under bubblan */
+        .message-footer-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+@media (max-width: 600px) {
+            .messages-container {
+                padding: 12px 10px;
+                gap: 12px;
+            }
+
+            .message {
+                max-width: 88%;
+                gap: 8px;
+            }
+
+            .message-bubble {
+                padding: 9px 12px;
+                border-radius: 14px;
+            }
+
+            .message-text {
+                font-size: 0.88rem;
+            }
+        }
+
+/* Kalender Popup & Modal Stylings */
+
+/* Huvudbehållare för kalendermodalen */
+.calendar-modal-content {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    width: 94vw;
+    max-width: 1100px;
+    height: 88vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+    position: relative;
+    color: #ffffff;
+    box-sizing: border-box;
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.calendar-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-right: 36px;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-nav button:active, 
+.save-btn:active {
+    transform: translateY(0);
+}
+
+.calendar-nav .nav-text-full {
+    display: inline;
+}
+
+.calendar-nav .nav-text-short {
+    display: none;
+}
+
+/* Kalender-grid och scroll-område */
+.calendar-grid-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(6, 5, 10, 0.6);
+    -webkit-overflow-scrolling: touch;
+    contain: content;
+}
+
+.day-column:last-child {
+    border-right: none;
+}
+
+.day-events {
+    flex: 1;
+    position: relative;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Kalenderhändelser */
+.calendar-event {
+    background: rgba(217, 70, 239, 0.2);
+    border-left: 3px solid #d946ef;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    transition: background 0.2s ease;
+}
+
+.calendar-event.planering {
+    background: rgba(255, 255, 255, 0.08);
+    border-left-color: #94a3b8;
+    color: #e2e8f0;
+}
+
+.calendar-event.custom {
+    border-left-color: #a855f7;
+    background: rgba(168, 85, 247, 0.22);
+}
+
+/* Hantering av flera krockande händelser */
+.event-row-split {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.event-row-split .calendar-event {
+    width: 100%;
+    flex: none;  
+}
+
+/* Styling för "Lägg till händelse"-formuläret */
+.event-form-content {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 24px 20px;
+    border-radius: 18px;
+    width: 90vw;
+    max-width: 380px;
+    color: white;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+    box-sizing: border-box;
+}
+
+.event-form-content h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.event-form-content .modal-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 1.3rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.event-form-content .modal-close-btn:hover {
+    background: rgba(244, 63, 94, 0.2);
+    color: #f43f5e;
+    border-color: rgba(244, 63, 94, 0.4);
+}
+
+.event-form-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.event-form-content input[type="text"],
+.event-form-content input[type="time"],
+.event-form-content select {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.event-form-content select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d946ef' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.event-form-content select option {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 10px;
+}
+
+.event-form-content input:focus,
+.event-form-content select:focus {
+    border-color: #d946ef;
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+}
+
+.time-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.time-inputs .form-group {
+    flex: 1;
+}
+
+.event-form-content .save-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 11px;
+    font-size: 0.9rem;
+}
+
+/* Mobilanpassningar för kalendern */
+@media (max-width: 640px) {
+    .calendar-modal-content {
+        width: 96vw;
+        height: 92vh;
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .calendar-header {
+        padding-right: 32px;
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+
+    .calendar-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .calendar-nav {
+        width: 100%;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .calendar-nav button, 
+    .save-btn {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+        border-radius: 8px;
+    }
+
+    .calendar-nav .nav-text-full {
+        display: none;
+    }
+
+    .calendar-nav .nav-text-short {
+        display: inline;
+    }
+
+    .add-event-btn {
+        margin-left: auto;
+    }
+
+    .calendar-grid {
+        min-width: 680px;
+    }
+
+    .day-header {
+        font-size: 0.78rem;
+        padding: 8px 4px;
+    }
+
+    .calendar-event {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .loading-logo {
+        width: 160px;
+    }
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Unread Messages Divider */
+.unread-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    position: relative;
+    width: 100%;
+}
+
+.unread-divider-badge svg {
+    animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+@keyframes unreadPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* Indikator för olästa meddelanden i sidebaren */
+.item-link.has-unread {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.item-link.has-unread::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #5865F2; /* Discord-blå/lila punkt */
+    border-radius: 50%;
+    margin-left: auto;
+}
+
+.chat-link {
+    color: #3b82f6;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.chat-link:hover {
+    color: #60a5fa;
+}
+
+@keyframes micPulse {
+    0% {
+        box-shadow: 0 0 8px #ec4899, 0 0 12px rgba(236, 72, 153, 0.5);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 18px #ec4899, 0 0 28px rgba(244, 114, 182, 0.8);
+        transform: scale(1.1);
+    }
+}
+
+/* Svävande tooltip för reaktioner */
+.reaction-badge {
+    position: relative;
+}
+
+.reaction-badge[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(13, 10, 24, 0.95);
+    color: var(--text-white);
+    border: 1px solid var(--border-glass);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 20;
+}
+
+.reaction-badge[data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.unread-toast.toast-hide {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastSlideOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-20px) scale(0.9); }
+}
+
+
+/* =========================================================
+   CHAT THEME OVERRIDES
+   style(2).css colors take priority in the chat area.
+   Prevents oldstyle.css pink theme rules from overriding them.
+   ========================================================= */
+
+.chat-area {
+    background: var(--bg-main) !important;
+}
+
+.messages-container {
+    background-color: var(--bg-main) !important;
+    background-image:
+        linear-gradient(rgba(0, 210, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 210, 255, 0.04) 1px, transparent 1px) !important;
+    background-size: 32px 32px !important;
+}
+
+.messages-container::before {
+    background: radial-gradient(
+        circle at 50% 10%,
+        rgba(0, 210, 255, 0.08),
+        transparent 70%
+    ) !important;
+}
+
+.message-content,
+.message-bubble {
+    background: var(--bg-card) !important;
+    border: 1px solid rgba(0, 210, 255, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+}
+
+.message-bubble:hover,
+.message-content:hover {
+    border-color: rgba(0, 210, 255, 0.5) !important;
+}
+
+.message.self .message-content,
+.message.self .message-bubble {
+    background: var(--accent-hover) !important;
+    border: 1px solid var(--accent-pop) !important;
+    box-shadow: var(--neon-glow) !important;
+}
+
+/* Reply/quote and other chat cards should not inherit the old pink glass border. */
+.message-content-wrapper .reply-preview,
+.message-content-wrapper .reply-quote,
+.message-content-wrapper .message-attachment,
+.message-content-wrapper .upload-preview {
+    border-color: rgba(0, 210, 255, 0.25) !important;
+}
+
+/* Chat input container / footer separators */
+.chat-footer,
+.chat-input-area,
+.chat-input-wrapper {
+    border-color: rgba(0, 210, 255, 0.25) !important;
 }
