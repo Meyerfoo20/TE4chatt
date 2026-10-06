@@ -430,7 +430,6 @@ function showUnreadToast(count) {
 
     document.body.appendChild(toast);
 
-    // Dölj och ta bort toasten efter 4 sekunder
     setTimeout(() => {
         toast.classList.add('toast-hide');
         setTimeout(() => toast.remove(), 300);
@@ -456,7 +455,6 @@ function listenForUnreadMessages() {
             
             updateSidebarUnreadUI();
 
-            // Visa toast om det finns olästa chattar när användaren kommer in
             if (unreadChats.size > 0 && !hasShownUnreadToast) {
                 showUnreadToast(unreadChats.size);
             }
@@ -673,7 +671,6 @@ function handleLogout() {
     auth.signOut();
 }
 
-// --- PROFILHANTERING ---
 function openProfileModal() {
     if (!currentUser) return;
     const nameInput = document.getElementById('profile-name-input');
@@ -737,7 +734,6 @@ function updateUserFooterUI() {
     if (avatarEl) avatarEl.innerHTML = renderAvatarContent(currentUser.photoURL, currentUser.initials);
 }
 
-// --- KALENDER LOGIK ---
 function openCalendarModal() {
     currentWeekOffset = 0;
     const modal = document.getElementById('calendar-modal');
@@ -922,7 +918,6 @@ function checkOverlap(e1, e2) {
     return e1.start < e2.end && e2.start < e1.end;
 }
 
-// --- BILD-MODAL ---
 function openImageModal(src) {
     const modalSrc = document.getElementById('image-modal-src');
     const modal = document.getElementById('image-modal');
@@ -935,7 +930,6 @@ function closeImageModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// --- AVISERINGAR ---
 function toggleNotifications(enabled) {
     if (!currentUser) return;
 
@@ -995,7 +989,6 @@ async function saveNotificationPreference(enabled) {
     }
 }
 
-// --- KANAL-HANTERING ---
 function openChannelModal(channelId = null) {
     editingChannelId = channelId;
     const titleEl = document.getElementById('channel-modal-title');

@@ -1288,10 +1288,6 @@ input:checked + .slider:before {
     border: 1px solid var(--accent-pop);
 }
 
-/* ============================================================
-   MERGED FROM oldstyle.css
-   Existing style(2).css rules are preserved so its color theme remains active.
-   ============================================================ */
 
 .message-content {
     background: var(--bg-card);
@@ -1471,7 +1467,6 @@ input:checked + .slider:before {
             transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
 
-/* Egna bubblor (Jag) */
         .message.self .message-bubble {
             border-radius: 18px;
             border-top-right-radius: 4px;
@@ -1479,7 +1474,7 @@ input:checked + .slider:before {
             border: 1px solid rgba(34, 197, 94, 0.4);
         }
 
-.timestamp {
+        .timestamp {
             font-size: 0.7rem;
             color: #94a3b8;
         }
@@ -1515,8 +1510,6 @@ input:checked + .slider:before {
         }
 
 /* Kalender Popup & Modal Stylings */
-
-/* Huvudbehållare för kalendermodalen */
 .calendar-modal-content {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1666,9 +1659,9 @@ input:checked + .slider:before {
 }
 
 .event-form-content .modal-close-btn:hover {
-    background: rgba(244, 63, 94, 0.2);
-    color: #f43f5e;
-    border-color: rgba(244, 63, 94, 0.4);
+    background: rgba(63, 147, 244, 0.2);
+    color: #3facf4;
+    border-color: rgba(63, 153, 244, 0.4);
 }
 
 .event-form-content form {
@@ -1725,8 +1718,8 @@ input:checked + .slider:before {
 
 .event-form-content input:focus,
 .event-form-content select:focus {
-    border-color: #d946ef;
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+    border-color: #46b1ef;
+    box-shadow: 0 0 0 3px rgba(70, 138, 239, 0.2);
 }
 
 .time-inputs {
@@ -1837,7 +1830,7 @@ input:checked + .slider:before {
 @keyframes unreadPulse {
     0% {
         transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        box-shadow: 0 0 0 0 rgba(68, 159, 239, 0.7);
     }
     70% {
         transform: scale(1.1);
@@ -1860,7 +1853,7 @@ input:checked + .slider:before {
     display: inline-block;
     width: 8px;
     height: 8px;
-    background-color: #5865F2; /* Discord-blå/lila punkt */
+    background-color: #5865F2;
     border-radius: 50%;
     margin-left: auto;
 }
